@@ -91,7 +91,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -246,6 +246,14 @@ rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
+
+  -- {
+  --   'lukas-reineke/indent-blankline.nvim',
+  --   main = 'ibl',
+  --   ---@module "ibl"
+  --   ---@type ibl.config
+  --   opts = {},
+  -- },
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'NMAC427/guess-indent.nvim', -- Detect tabstop and shiftwidth automatically
 
@@ -977,14 +985,14 @@ require('lazy').setup({
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1010,6 +1018,40 @@ require('lazy').setup({
       lazy = '💤 ',
     },
   },
+})
+
+-- Customs
+
+-- Better movement
+vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, 'J', '4j', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, 'K', '4k', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
+
+-- Exit file without saving
+vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
+
+-- Toggle Neo-Tree
+vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
+
+-- See recent files
+-- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')
+vim.keymap.set('n', '<leader>r', function()
+  require('telescope.builtin').oldfiles { initial_mode = 'normal' }
+end, { desc = '[S]earch Recent Files ("." for repeat)' })
+
+-- Map <leader>d to delete a line without yanking (black hole register)
+vim.keymap.set('n', '<leader>d', [["_dd]], { noremap = true, silent = true })
+
+--Remember last cursor position
+local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
+vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
+  group = userconfig_group,
+  desc = 'return cursor to where it was last time closing the file',
+  pattern = '*',
+  command = 'silent! normal! g`"zv',
 })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
