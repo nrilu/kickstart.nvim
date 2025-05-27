@@ -1045,6 +1045,8 @@ end, { desc = '[S]earch Recent Files ("." for repeat)' })
 -- Map <leader>d to delete a line without yanking (black hole register)
 vim.keymap.set('n', '<leader>d', [["_dd]], { noremap = true, silent = true })
 
+require 'custom.telescope_to_dir'
+
 --Remember last cursor position
 local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
 vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
