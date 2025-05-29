@@ -1030,6 +1030,11 @@ vim.keymap.set({ 'n', 'v' }, 'K', '4k', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 
+-- Insert/Delete lines in normal mode
+vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true })
+vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true })
+vim.keymap.set('n', '<Del>', 'dd', { noremap = true })
+
 -- Exit file without saving
 vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
 
@@ -1042,7 +1047,7 @@ vim.keymap.set('n', '<leader>r', function()
   require('telescope.builtin').oldfiles { initial_mode = 'normal' }
 end, { desc = '[S]earch Recent Files ("." for repeat)' })
 
--- Map <leader>d to delete a line without yanking (black hole register)
+--delete a line without yanking (black hole register)
 vim.keymap.set('n', '<leader>d', [["_dd]], { noremap = true, silent = true })
 
 require 'custom.telescope_to_dir'
