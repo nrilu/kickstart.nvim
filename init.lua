@@ -1,3 +1,6 @@
+-- The line beneath this is called `modeline`. See `:help modeline`
+-- vim: ts=2 sts=2 sw=2 et
+--
 --[[
 
 =====================================================================
@@ -1020,7 +1023,18 @@ require('lazy').setup({
   },
 })
 
--- Customs
+-- Custom Config
+
+--Remember last cursor position
+local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
+vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
+  group = userconfig_group,
+  desc = 'return cursor to where it was last time closing the file',
+  pattern = '*',
+  command = 'silent! normal! g`"zv',
+})
+
+-- Custom Keymaps
 
 -- Better movement
 vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
@@ -1037,6 +1051,9 @@ vim.keymap.set('n', '<Del>', 'dd', { noremap = true })
 
 -- Exit file without saving
 vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
+-- Quick saving,
+vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Write and save' })
+vim.keymap.set('n', 'SS', ':w<CR>', { desc = 'Write and save' })
 
 -- Toggle Neo-Tree
 vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
@@ -1052,14 +1069,22 @@ vim.keymap.set('n', '<leader>d', [["_dd]], { noremap = true, silent = true })
 
 require 'custom.telescope_to_dir'
 
---Remember last cursor position
-local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
-vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
-  group = userconfig_group,
-  desc = 'return cursor to where it was last time closing the file',
-  pattern = '*',
-  command = 'silent! normal! g`"zv',
-})
+vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
+vim.keymap.set({ 'n', 'v' }, 'e', 'w', { desc = 'Next word' })
+vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
+
+vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
+--
+-- Normal mode: simulate gcc
+vim.keymap.set('n', '<C-j>', function()
+  vim.cmd 'normal gcc'
+end, { noremap = true, silent = true, desc = 'Toggle comment (line)' })
+
+vim.keymap.set('v', '<C-j>', function()
+  vim.cmd 'normal gc'
+end, { noremap = true, silent = true, desc = 'Toggle comment (selection)' })
+-- vim.keymap.set('n', '<C-j>', function()
+--
+-- print 'CTRL-J pressed!'
+-- end, { noremap = true })
