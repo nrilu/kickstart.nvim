@@ -1069,10 +1069,13 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
 -- Better movement
 vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, 'J', '4j', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, 'K', '4k', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual lines' })
+vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 -- vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
+
+vim.keymap.set('n', 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
+vim.keymap.set('n', 'k', 'gk', { noremap = true, silent = true })
 
 vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true, desc = 'Insert line in normal mode' })
 vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true, desc = 'Delete line in normal mode' })
