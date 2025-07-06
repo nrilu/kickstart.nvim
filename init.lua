@@ -1061,7 +1061,7 @@ vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'J', '4j', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'K', '4k', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
+-- vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 
 vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true, desc = 'Insert line in normal mode' })
 vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true, desc = 'Delete line in normal mode' })
@@ -1100,8 +1100,9 @@ end, { noremap = true, silent = true, desc = 'Toggle comment (selection)' })
 
 vim.keymap.set({ 'n', 'v' }, 'H', '<C-o>', { desc = 'Previous cursor location' })
 vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
-
 vim.keymap.set({ 'n', 'v' }, 'tt', 'dd', { noremap = true, silent = true, desc = 'Delete with clipboard' })
-
 vim.keymap.set({ 'n', 'v' }, 'x', '"_x', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
+
+vim.api.nvim_set_keymap('n', '<C-n>', ':cclose<CR>', { noremap = true, silent = true, desc = 'Close quick buffer' })
+
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
