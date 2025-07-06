@@ -710,6 +710,24 @@ require('lazy').setup({
             },
           },
         },
+
+        texlab = {
+          capabilities = capabilities, -- Pass capabilities to texlab as well
+          settings = {
+            texlab = {
+              build = {
+                executable = 'pdflatex',
+                args = { '-interaction=nonstopmode', '-synctex=1', '%f' },
+                onSave = true, -- Auto-build on save
+                forwardSearchAfter = true, -- Forward search after successful build
+              },
+              forwardSearch = {
+                executable = 'zathura',
+                args = { '--synctex-forward', '%l:1:%f', '%p' },
+              },
+            },
+          },
+        },
       }
 
       -- Ensure the servers and tools above are installed
