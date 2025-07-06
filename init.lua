@@ -91,7 +91,7 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+vim.g.maplocalleader = ','
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
@@ -685,6 +685,7 @@ require('lazy').setup({
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
+        bashls = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -1044,18 +1045,14 @@ vim.keymap.set({ 'n', 'v' }, 'K', '4k', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 
--- Insert/Delete lines in normal mode
-vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true })
-vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true })
-vim.keymap.set('n', '<Del>', 'dd', { noremap = true })
+vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true, desc = 'Insert line in normal mode' })
+vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true, desc = 'Delete line in normal mode' })
+vim.keymap.set('n', '<Del>', 'dd', { noremap = true, desc = 'Delete line in normal mode' })
 
--- Exit file without saving
 vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
--- Quick saving,
 vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Write and save' })
-vim.keymap.set('n', 'SS', ':w<CR>', { desc = 'Write and save' })
+-- vim.keymap.set('n', 'SS', ':w<CR>', { desc = 'Write and save' })
 
--- Toggle Neo-Tree
 vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
 -- See recent files
@@ -1063,9 +1060,6 @@ vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 vim.keymap.set('n', '<leader>r', function()
   require('telescope.builtin').oldfiles { initial_mode = 'normal' }
 end, { desc = '[S]earch Recent Files ("." for repeat)' })
-
---delete a line without yanking (black hole register)
-vim.keymap.set('n', '<leader>d', [["_dd]], { noremap = true, silent = true })
 
 require 'custom.telescope_to_dir'
 
@@ -1075,16 +1069,21 @@ vim.keymap.set({ 'n', 'v' }, 'e', 'w', { desc = 'Next word' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 
 vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
---
--- Normal mode: simulate gcc
+
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
+  vim.cmd 'normal j'
 end, { noremap = true, silent = true, desc = 'Toggle comment (line)' })
 
 vim.keymap.set('v', '<C-j>', function()
   vim.cmd 'normal gc'
+  vim.cmd 'normal j'
 end, { noremap = true, silent = true, desc = 'Toggle comment (selection)' })
--- vim.keymap.set('n', '<C-j>', function()
---
--- print 'CTRL-J pressed!'
--- end, { noremap = true })
+
+vim.keymap.set({ 'n', 'v' }, 'H', '<C-o>', { desc = 'Previous cursor location' })
+vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
+
+vim.keymap.set({ 'n', 'v' }, 'tt', 'dd', { noremap = true, silent = true, desc = 'Delete with clipboard' })
+
+vim.keymap.set({ 'n', 'v' }, 'x', '"_x', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
+-- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
