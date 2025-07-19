@@ -958,8 +958,18 @@ require('lazy').setup({
       -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
-      require('mini.surround').setup()
-
+      -- require('mini.surround').setup()
+      require('mini.surround').setup {
+        mappings = {
+          add = 'gsa', -- Add surrounding
+          delete = 'gsd', -- Delete surrounding
+          replace = 'gsr', -- Replace surrounding
+          find = 'gsf', -- Find surrounding (to the right)
+          find_left = 'gsF', -- Find surrounding (to the left)
+          highlight = 'gsh', -- Highlight surrounding
+          update_n_lines = 'gsn', -- Update `n_lines`
+        },
+      }
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
@@ -1074,8 +1084,8 @@ vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 -- vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 
-vim.keymap.set('n', 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
-vim.keymap.set('n', 'k', 'gk', { noremap = true, silent = true })
+vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
+vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
 
 vim.keymap.set('n', '<CR>', 'O<Esc><Down>', { noremap = true, desc = 'Insert line in normal mode' })
 vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true, desc = 'Delete line in normal mode' })
@@ -1083,7 +1093,6 @@ vim.keymap.set('n', '<Del>', 'dd', { noremap = true, desc = 'Delete line in norm
 
 vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
 vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Write and save' })
--- vim.keymap.set('n', 'SS', ':w<CR>', { desc = 'Write and save' })
 
 vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
@@ -1098,7 +1107,9 @@ require 'custom.telescope_to_dir'
 vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
 vim.keymap.set({ 'n', 'v' }, 'e', 'w', { desc = 'Next word' })
+vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
+vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
 vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
 
@@ -1117,6 +1128,21 @@ vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
 vim.keymap.set({ 'n', 'v' }, 'tt', 'dd', { noremap = true, silent = true, desc = 'Delete with clipboard' })
 vim.keymap.set({ 'n', 'v' }, 'x', '"_x', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
 
-vim.api.nvim_set_keymap('n', '<C-n>', ':cclose<CR>', { noremap = true, silent = true, desc = 'Close quick buffer' })
+vim.api.nvim_set_keymap('n', '<C-n>', ':cclose<CR>', { noremap = true, silent = true, desc = 'LaTeX Close quick buffer' })
 
+vim.keymap.set({ 'n' }, 'Y', 'yiw', { noremap = true, silent = true, desc = 'Yank in word' })
+
+vim.keymap.set({ 'n', 'v' }, '<C-p>', function()
+  -- Paste over the word under the cursor, discard the old word using black hole
+  vim.cmd 'normal! viw"_dP'
+  -- Yank the newly pasted word back into the default register
+  vim.cmd 'normal! viwy'
+end, { noremap = true, silent = true, desc = 'Paste over word and keep pasted word in clipboard' })
+
+vim.keymap.set({ 'n', 'v' }, '<', '<gv', { desc = 'Keep block selected after indenting' })
+vim.keymap.set({ 'n', 'v' }, '>', '>gv', { desc = 'Keep block selected after indenting' })
+
+vim.opt.wrap = false
+
+-- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
