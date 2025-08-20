@@ -1005,6 +1005,9 @@ require('lazy').setup({
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { 'ruby' },
       },
+      fold = {
+        enable = true, --for markdown folds
+      },
       indent = { enable = true, disable = { 'ruby' } },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
@@ -1074,6 +1077,27 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   command = 'silent! normal! g`"zv',
 })
 
+-- Folds for markdown
+-- vim.api.nvim_create_autocmd('FileType', {
+-- pattern = 'markdown',
+-- callback = function()
+-- vim.opt_local.foldmethod = 'expr'
+-- vim.opt_local.foldexpr = 'nvim_treesitter#foldexpr()'
+-- end,
+-- })
+vim.keymap.set('n', 'ä', 'za', { desc = 'Close fold' })
+-- function _G.markdown_foldtext()
+-- local line = vim.fn.getline(vim.v.foldstart):gsub('^%s+', ''):gsub('%s+$', '')
+-- local folded_line_count = vim.v.foldend - vim.v.foldstart + 1
+-- return line .. ' (' .. folded_line_count .. ' lines)'
+-- end
+
+--
+--
+-- autocmd FileType markdown setlocal foldmethod=syntax
+
+-- require 'custom.plugins.markdown-fold'
+
 -- Custom Keymaps
 
 -- Better movement
@@ -1092,7 +1116,9 @@ vim.keymap.set('n', '<Backspace>', '<Up>dd', { noremap = true, desc = 'Delete li
 vim.keymap.set('n', '<Del>', 'dd', { noremap = true, desc = 'Delete line in normal mode' })
 
 vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
-vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Write and save' })
+vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Save' })
+vim.keymap.set('n', '+', ':w<CR>', { desc = 'Save' })
+vim.keymap.set('n', '++', ':wq<CR>', { desc = 'Save and quit' })
 
 vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
@@ -1111,7 +1137,7 @@ vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
-vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
+-- vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
@@ -1127,6 +1153,7 @@ vim.keymap.set({ 'n', 'v' }, 'H', '<C-o>', { desc = 'Previous cursor location' }
 vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
 vim.keymap.set({ 'n', 'v' }, 'tt', 'dd', { noremap = true, silent = true, desc = 'Delete with clipboard' })
 vim.keymap.set({ 'n', 'v' }, 'x', '"_x', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
+vim.keymap.set({ 'n', 'v' }, 'X', '"_X', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
 
 vim.api.nvim_set_keymap('n', '<C-n>', ':cclose<CR>', { noremap = true, silent = true, desc = 'LaTeX Close quick buffer' })
 
@@ -1142,7 +1169,24 @@ end, { noremap = true, silent = true, desc = 'Paste over word and keep pasted wo
 vim.keymap.set({ 'n', 'v' }, '<', '<gv', { desc = 'Keep block selected after indenting' })
 vim.keymap.set({ 'n', 'v' }, '>', '>gv', { desc = 'Keep block selected after indenting' })
 
-vim.opt.wrap = false
+vim.keymap.set({ 'i' }, 'ð', '<Backspace>', { desc = 'Delete via ALTGR+d' })
+vim.keymap.set({ 'i' }, '«', '<Backspace>', { desc = 'Delete via ALTGR+d' })
+vim.keymap.set({ 'i' }, 'ø', '<Backspace>', { desc = 'Delete via ALTGR+d' })
+vim.keymap.set({ 'n', 'v' }, 'ð', 'X', { desc = 'Delete via ALTGR+d' })
+vim.keymap.set({ 'n', 'v' }, '«', 'X', { desc = 'Delete via ALTGR+d' })
+vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
+
+-- Fold by syntax for Markdown
+-- vim.cmd [[
+-- augroup markdown_folding
+-- autocmd!
+-- autocmd FileType markdown setlocal foldmethod=expr foldexpr=nvim_treesitter#foldexpr()
+-- augroup END
+-- ]]
+
+-- Map AltGr + l in normal mode
+
+-- vim.opt.wrap = false
 
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
