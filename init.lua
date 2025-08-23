@@ -1085,7 +1085,8 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
 -- vim.opt_local.foldexpr = 'nvim_treesitter#foldexpr()'
 -- end,
 -- })
-vim.keymap.set('n', 'ä', 'za', { desc = 'Close fold' })
+vim.keymap.set('n', 'b', 'za', { desc = 'Toggle fold' })
+vim.keymap.set('n', 'ä', 'za', { desc = 'Toggle fold' })
 -- function _G.markdown_foldtext()
 -- local line = vim.fn.getline(vim.v.foldstart):gsub('^%s+', ''):gsub('%s+$', '')
 -- local folded_line_count = vim.v.foldend - vim.v.foldstart + 1

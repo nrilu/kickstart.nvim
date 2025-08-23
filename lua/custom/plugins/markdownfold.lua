@@ -7,7 +7,7 @@ vim.api.nvim_create_autocmd('FileType', {
 
     -- Force treesitter to reparse and update folds
     vim.defer_fn(function()
-      -- vim.cmd 'normal! zx' -- Update folds
+      vim.cmd 'normal! zx' -- Update folds
     end, 100) -- Small delay to let treesitter finish parsing
   end,
 })
