@@ -866,6 +866,7 @@ require('lazy').setup({
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
+        -- ['<C-i>'] = { 'accept' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1138,7 +1139,7 @@ vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
--- vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute file' })
+vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
