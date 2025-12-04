@@ -761,6 +761,28 @@ require('lazy').setup({
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
+
+          -- Nicco
+          pyright = function()
+            require('lspconfig').pyright.setup {
+              capabilities = capabilities,
+              settings = {
+                python = {
+                  analysis = {
+                    typeCheckingMode = 'off',
+                    useLibraryCodeForTypes = true,
+                    diagnosticMode = 'openFilesOnly',
+                    -- Add these to reduce noise:
+                    reportGeneralTypeIssues = false,
+                    reportOptionalMemberAccess = false,
+                    reportOptionalSubscript = false,
+                    reportPrivateImportUsage = false,
+                  },
+                },
+              },
+            }
+          end,
+          -- /Nicco
         },
       }
     end,
@@ -996,7 +1018,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'python', 'query', 'vim', 'vimdoc' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
