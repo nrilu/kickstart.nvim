@@ -782,7 +782,6 @@ require('lazy').setup({
               },
             }
           end,
-          -- /Nicco
         },
       }
     end,
@@ -795,9 +794,7 @@ require('lazy').setup({
     keys = {
       {
         '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
+        function() end,
         mode = '',
         desc = '[F]ormat buffer',
       },
@@ -1130,7 +1127,8 @@ vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual lines' })
 vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
--- vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
+vim.keymap.set({ 'n' }, 'ä', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring to previous line' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
 vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
@@ -1174,6 +1172,7 @@ vim.keymap.set('v', '<C-j>', function()
 end, { noremap = true, silent = true, desc = 'Toggle comment (selection)' })
 
 vim.keymap.set({ 'n', 'v' }, 'H', '<C-o>', { desc = 'Previous cursor location' })
+vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
 vim.keymap.set({ 'n', 'v' }, 'L', '<C-i>', { desc = 'Next cursor location' })
 vim.keymap.set({ 'n', 'v' }, 'tt', 'dd', { noremap = true, silent = true, desc = 'Delete with clipboard' })
 vim.keymap.set({ 'n', 'v' }, 'x', '"_x', { noremap = true, silent = true, desc = 'Delete character without clipboard' })
