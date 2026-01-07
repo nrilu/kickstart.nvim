@@ -1057,6 +1057,7 @@ require('lazy').setup({
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
+  --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
   { import = 'custom.plugins' },
   --
@@ -1097,6 +1098,15 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   command = 'silent! normal! g`"zv',
 })
 
+local cmp = require 'cmp'
+cmp.setup {
+  mapping = cmp.mapping.preset.insert {
+    ['<C-Space>'] = cmp.mapping.confirm {
+      select = true, -- accepts currently selected item
+    },
+  },
+}
+
 -- Folds for markdown
 -- vim.api.nvim_create_autocmd('FileType', {
 -- pattern = 'markdown',
@@ -1128,7 +1138,8 @@ vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual
 vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
-vim.keymap.set({ 'n' }, 'ä', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring to previous line' })
+vim.keymap.set({ 'n' }, 'N', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring to previous line' })
+vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
 vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
