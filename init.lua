@@ -770,8 +770,14 @@ require('lazy').setup({
                 python = {
                   analysis = {
                     typeCheckingMode = 'off',
-                    useLibraryCodeForTypes = true,
                     diagnosticMode = 'openFilesOnly',
+                    useLibraryCodeForTypes = true,
+                    -- Added to fix extrem lag in GB-large repos where the LSP scanned everything (14.01.2026)
+                    -- autoSearchPaths = false,
+                    -- Changed to false for same problem (14.01.2026)
+                    -- useLibraryCodeForTypes = false,
+
+                    -- useLibraryCodeForTypes = false,
                     -- Add these to reduce noise:
                     reportGeneralTypeIssues = false,
                     reportOptionalMemberAccess = false,
@@ -1088,6 +1094,7 @@ require('lazy').setup({
 })
 
 -- Custom Config
+--
 
 --Remember last cursor position
 local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
@@ -1098,6 +1105,7 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   command = 'silent! normal! g`"zv',
 })
 
+-- Autocomplete shortcut
 local cmp = require 'cmp'
 cmp.setup {
   mapping = cmp.mapping.preset.insert {
@@ -1138,8 +1146,8 @@ vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual
 vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
-vim.keymap.set({ 'n' }, 'N', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring to previous line' })
-vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete' })
+vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring line to previous line' })
+vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete suggestion' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
 vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
@@ -1161,7 +1169,37 @@ vim.keymap.set('n', '<leader>r', function()
   require('telescope.builtin').oldfiles { initial_mode = 'normal' }
 end, { desc = '[S]earch Recent Files ("." for repeat)' })
 
-require 'custom.telescope_to_dir'
+-- require 'custom.telescope_to_dir'
+
+-- Jump into recent files directly after starting neovim via CTRL+M
+vim.api.nvim_create_autocmd('VimEnter', {
+  once = true,
+  callback = function()
+    if vim.g.startup_oldfiles == 1 then
+      require('telescope.builtin').oldfiles {
+        initial_mode = 'normal',
+      }
+    end
+  end,
+})
+
+--have J and K work in telescope oldfiles (and all other telescope pickers too)
+require('telescope').setup {
+  defaults = {
+    mappings = {
+      n = {
+        ['J'] = function(prompt_bufnr)
+          local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+          current_picker:move_selection(4)
+        end,
+        ['K'] = function(prompt_bufnr)
+          local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+          current_picker:move_selection(-4)
+        end,
+      },
+    },
+  },
+}
 
 vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
@@ -1170,7 +1208,7 @@ vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
-vim.keymap.set('n', 'ßß', ':!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
+vim.keymap.set('n', 'ßß', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
