@@ -1124,7 +1124,7 @@ cmp.setup {
 -- end,
 -- })
 vim.keymap.set('n', 'b', 'za', { desc = 'Toggle fold' })
-vim.keymap.set('n', 'ä', 'za', { desc = 'Toggle fold' })
+-- vim.keymap.set('n', 'ä', 'za', { desc = 'Toggle fold' })
 -- function _G.markdown_foldtext()
 -- local line = vim.fn.getline(vim.v.foldstart):gsub('^%s+', ''):gsub('%s+$', '')
 -- local folded_line_count = vim.v.foldend - vim.v.foldstart + 1
@@ -1265,6 +1265,19 @@ vim.keymap.set({ 'n', 'v' }, 'ð', 'X', { desc = 'Delete via ALTGR+d' })
 vim.keymap.set({ 'n', 'v' }, '«', 'X', { desc = 'Delete via ALTGR+d' })
 vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 
+vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
+
+vim.keymap.set('c', '<Esc>', function()
+  if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
+    return '<CR>'
+  end
+  return '<Esc>'
+end, { expr = true, desc = 'Search keeps window on first hit even when pressing escape' })
+-- Open .md files fully unfolded
+-- vim.api.nvim_create_autocmd('FileType', {
+-- pattern = 'markdown',
+-- command = 'normal! zR',
+-- })
 -- Fold by syntax for Markdown
 -- vim.cmd [[
 -- augroup markdown_folding
