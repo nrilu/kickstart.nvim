@@ -1273,6 +1273,8 @@ vim.keymap.set('c', '<Esc>', function()
   end
   return '<Esc>'
 end, { expr = true, desc = 'Search keeps window on first hit even when pressing escape' })
+
+vim.api.nvim_set_hl(0, '@markup.raw.block.markdown', { fg = '#51a8ad' })
 -- Open .md files fully unfolded
 -- vim.api.nvim_create_autocmd('FileType', {
 -- pattern = 'markdown',
