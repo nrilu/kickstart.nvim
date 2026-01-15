@@ -1138,9 +1138,26 @@ vim.keymap.set('n', 'ä', 'za', { desc = 'Toggle fold' })
 -- require 'custom.plugins.markdown-fold'
 
 -- Custom Keymaps
+--
+vim.keymap.set({ 'n', 'v' }, '-', function()
+  local col = vim.fn.col '.' -- Current cursor column
+  local last_col = vim.fn.col '$' - 1 -- Last character column (Vim's $ is 1 past the last char)
+  -- If we are not at the end of the line yet
+  if col < last_col then
+    -- Try to move one word forward
+    vim.cmd 'normal! w'
+    -- If 'w' jumped us to the next line, pull it back to the end of the previous line
+    if vim.fn.col '.' < col then
+      vim.cmd 'normal! k$'
+    end
+  else
+    -- If we are already at the end of the line, go to the next word normally
+    vim.cmd 'normal! w'
+  end
+end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last character of a line' })
 
 -- Better movement
-vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
+-- vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual lines' })
 vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
