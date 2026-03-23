@@ -854,12 +854,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
         opts = {},
       },
@@ -891,7 +891,8 @@ require('lazy').setup({
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
-        -- ['<C-i>'] = { 'accept' },
+        -- Accept autocmpletion suggestion with spacebar
+        ['<C-Space>'] = { 'accept' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -913,6 +914,10 @@ require('lazy').setup({
         default = { 'lsp', 'path', 'snippets', 'lazydev' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+          omni = {
+            name = 'Omni',
+            module = 'blink.cmp.sources.omni',
+          },
         },
       },
 
@@ -1048,15 +1053,82 @@ require('lazy').setup({
   -- init.lua. If you want these files, they are in the repository, so you can just download them and
   -- place them in the correct locations.
 
+  {
+    'lervag/vimtex',
+    ft = { 'tex' },
+
+    init = function()
+      vim.g.vimtex_view_method = 'general'
+      vim.g.vimtex_quickfix_mode = 0
+      -- vim.g.maplocalleader = ',' //needs to be defined before the lazy plugin
+
+      -- vim.o.foldmethod = 'expr'
+      -- vim.o.foldexpr = 'vimtex#fold#level(v:lnum)'
+      -- vim.o.foldtext = 'vimtex#fold#text()'
+      -- vim.o.foldlevel = 4
+    end,
+  },
+
+  {
+    -- 'hrsh7th/nvim-cmp',
+    -- dependencies = { 'hrsh7th/cmp-nvim-lsp' },
+    -- opts = function(_, opts)
+    -- local cmp = require 'cmp'
+
+    -- opts.sources = cmp.config.sources {
+    -- { name = 'nvim_lsp' },
+    -- { name = 'buffer' },
+    -- }
+
+    -- opts.mapping = cmp.mapping.preset.insert {
+    -- ['<C-Space>'] = cmp.mapping.complete(),
+    -- ['<C-u>'] = cmp.mapping.scroll_docs(-4),
+    -- ['<C-d>'] = cmp.mapping.scroll_docs(4),
+    -- ['<C-l>'] = cmp.mapping.confirm { select = true },
+    -- }
+    -- end,
+    --
+    --
+    --
+    --
+    --
+    -- ## Claude suggested to rather use this autocompletion onstead of nvim-cmp
+    'saghen/blink.cmp',
+    opts = function(_, opts)
+      -- blink.cmp doesn't have a vimtex source yet, so use omnifunc fallback
+      opts.sources = opts.sources or {}
+      table.insert(opts.sources.default, 'omni')
+      opts.sources.providers = opts.sources.providers or {}
+      opts.sources.providers.omni = {
+        name = 'Omni',
+        module = 'blink.cmp.sources.complete_func',
+        opts = { omnifunc = 'vimtex#complete#omnifunc' },
+      }
+    end,
+  },
+
+  --
+  --
+  --
+  --
+
+  -- {
+  -- 'rafamadriz/friendly-snippets',
+  -- config = function()
+  -- require('luasnip.loaders.from_vscode').lazy_load()
+  -- require('luasnip.loaders.from_lua').lazy_load { paths = '~/.config/nvim/snippets/' }
+  -- end,
+  -- },
+
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
   --
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
+  -- require 'kickstart.plugins.indent_line', #ugly
+  -- require 'kickstart.plugins.lint',   #already done by tressitter?
+  require 'kickstart.plugins.autopairs',
   require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
@@ -1093,8 +1165,74 @@ require('lazy').setup({
   },
 })
 
+--
+-- end of require('lazy').setup  ############################################################################
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+
 -- Custom Config
 --
+-- Snippets
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'LazyDone',
+  once = true,
+  callback = function()
+    local ls = require 'luasnip'
+    local s = ls.snippet
+    local t = ls.text_node
+    local i = ls.insert_node
+    local f = ls.function_node
+
+    ls.add_snippets('tex', {
+      -- inline math
+      s('mk', { t '$', i(1), t '$' }),
+
+      -- display math
+      s('dm', { t { '\\[', '\t' }, i(1), t { '', '\\]' } }),
+
+      -- fraction
+      s('frac', { t '\\frac{', i(1), t '}{', i(2), t '}' }),
+
+      -- environment
+      s('beg', {
+        t '\\begin{',
+        i(1),
+        t { '}', '\t' },
+        i(2),
+        t { '', '\\end{' },
+        f(function(args)
+          return args[1][1]
+        end, { 1 }),
+        t '}',
+      }),
+
+      -- figure
+      s('fig', {
+        t { '\\begin{figure}[h]', '\t\\centering', '\t\\includegraphics[width=0.8\\textwidth]{' },
+        i(1),
+        t { '}', '\t\\caption{' },
+        i(2),
+        t { '}', '\t\\label{fig:' },
+        i(3),
+        t { '}', '\\end{figure}' },
+      }),
+    })
+  end,
+})
 
 --Remember last cursor position
 local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
@@ -1106,14 +1244,14 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
 })
 
 -- Autocomplete shortcut
-local cmp = require 'cmp'
-cmp.setup {
-  mapping = cmp.mapping.preset.insert {
-    ['<C-Space>'] = cmp.mapping.confirm {
-      select = true, -- accepts currently selected item
-    },
-  },
-}
+-- local cmp = require 'cmp'
+-- cmp.setup {
+-- mapping = cmp.mapping.preset.insert {
+--  ['<C-Space>'] = cmp.mapping.confirm {
+--   select = true, -- accepts currently selected item
+-- },
+--},
+--}
 
 -- Tabsize 2 in markdown
 vim.api.nvim_create_autocmd('FileType', {
@@ -1124,6 +1262,40 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt_local.softtabstop = 2
     vim.opt_local.expandtab = true
     vim.opt_local.foldlevel = 99
+  end,
+})
+
+-- Markdown
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.softtabstop = 2
+    vim.opt_local.expandtab = true
+  end,
+})
+
+-- Shell
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'sh',
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.softtabstop = 2
+    vim.opt_local.expandtab = true
+  end,
+})
+
+-- LaTeX
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'tex',
+  callback = function()
+    local colorscheme = 'gruvbox'
+    local ok, _ = pcall(vim.api.nvim_command, 'colorscheme ' .. colorscheme)
+    if not ok then
+      print 'error setting colorscheme'
+    end
   end,
 })
 
@@ -1142,7 +1314,82 @@ vim.keymap.set('n', 'b', 'za', { desc = 'Toggle fold' })
 -- local folded_line_count = vim.v.foldend - vim.v.foldstart + 1
 -- return line .. ' (' .. folded_line_count .. ' lines)'
 -- end
+--
+--
+--
+--
+--
+--
+--
+--
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.foldmethod = 'expr'
+    vim.opt_local.foldexpr = 'nvim_treesitter#foldexpr()'
+    vim.opt_local.foldtext = 'v:lua.markdown_fold_text()'
 
+    -- Force treesitter to reparse and update folds
+    vim.defer_fn(function()
+      vim.cmd 'normal! zx' -- Update folds
+    end, 100) -- Small delay to let treesitter finish parsing
+  end,
+})
+
+local function markdown_fold_text()
+  local line = vim.fn.getline(vim.v.foldstart)
+
+  -- Extract heading text (remove # symbols)
+  local title = line:match '^#+%s*(.+)'
+  if title then
+    return title:gsub('^%s*', ''):gsub('%s*$', '')
+  end
+
+  -- For code blocks or other content
+  local first_line = line:gsub('^%s*', ''):gsub('%s*$', '')
+  if first_line:match '^```' then
+    local lang = first_line:match '^```(%S+)'
+    return lang and (lang .. ' code block') or 'Code block'
+  end
+
+  return first_line ~= '' and first_line or 'Folded content'
+end
+
+-- Make it globally available
+_G.markdown_fold_text = markdown_fold_text
+
+-- Apply only to markdown files
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.foldtext = 'v:lua.markdown_fold_text()'
+  end,
+})
+
+--
+--
+--
+--
+--
+--
+--
+-- C++ specific indentation
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'cpp',
+  callback = function()
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.tabstop = 2
+    vim.opt_local.softtabstop = 2
+    vim.opt_local.expandtab = true
+  end,
+})
+--
+--
+--
+--
+--
+--
+--
 --
 --
 -- autocmd FileType markdown setlocal foldmethod=syntax
@@ -1287,22 +1534,6 @@ vim.keymap.set('c', '<Esc>', function()
 end, { expr = true, desc = 'Search keeps window on first hit even when pressing escape' })
 
 vim.api.nvim_set_hl(0, '@markup.raw.block.markdown', { fg = '#51a8ad' })
--- Open .md files fully unfolded
--- vim.api.nvim_create_autocmd('FileType', {
--- pattern = 'markdown',
--- command = 'normal! zR',
--- })
--- Fold by syntax for Markdown
--- vim.cmd [[
--- augroup markdown_folding
--- autocmd!
--- autocmd FileType markdown setlocal foldmethod=expr foldexpr=nvim_treesitter#foldexpr()
--- augroup END
--- ]]
-
--- Map AltGr + l in normal mode
-
--- vim.opt.wrap = false
 
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
