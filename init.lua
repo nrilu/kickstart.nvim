@@ -881,6 +881,21 @@ require('lazy').setup({
           local i = ls.insert_node
           local f = ls.function_node
 
+          vim.cmd [[
+            " Expand or jump in insert mode
+            "imap <silent><expr> <> luasnip#expand_or_jumpable() ? '<Plug>luasnip-expand-or-jump' : '<C-f>' 
+
+            " Jump forward through tabstops in visual mode
+            "smap <silent><expr> <C-f> luasnip#jumpable(1) ? '<Plug>luasnip-jump-next' : '<C-f>'
+            " Jump forward in through tabstops in insert and visual mode with Control-f
+            imap <silent><expr> <C-f> luasnip#jumpable(1) ? '<Plug>luasnip-jump-next' : '<C-f>'
+            smap <silent><expr> <C-f> luasnip#jumpable(1) ? '<Plug>luasnip-jump-next' : '<C-f>'
+
+            " Jump backward through snippet tabstops with Shift-Tab (for example)
+            imap <silent><expr> <S-Tab> luasnip#jumpable(-1) ? '<Plug>luasnip-jump-prev' : '<S-Tab>'
+            smap <silent><expr> <S-Tab> luasnip#jumpable(-1) ? '<Plug>luasnip-jump-prev' : '<S-Tab>'
+          ]]
+
           -- 1. Setup your LaTeX snippets
           ls.add_snippets('tex', {
             -- inline math
@@ -919,19 +934,19 @@ require('lazy').setup({
 
           -- 2. Define Keymaps for jumping (Essential!)
           -- These allow you to move between the i(1), i(2) placeholders
-          vim.keymap.set({ 'i', 's' }, '<Tab>', function()
-            if ls.expand_or_jumpable() then
-              ls.expand_or_jump()
-            else
-              vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, false, true), 'n', false)
-            end
-          end, { silent = true })
+          -- vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+          -- if ls.expand_or_jumpable() then
+          -- ls.expand_or_jump()
+          -- else
+          -- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, false, true), 'n', false)
+          -- end
+          -- end, { silent = true })
 
-          vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
-            if ls.jumpable(-1) then
-              ls.jump(-1)
-            end
-          end, { silent = true })
+          -- vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
+          -- if ls.jumpable(-1) then
+          -- ls.jump(-1)
+          -- end
+          -- end, { silent = true })
         end,
 
         opts = {},
@@ -965,7 +980,7 @@ require('lazy').setup({
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
         -- Accept autocmpletion suggestion with spacebar
-        ['<C-Space>'] = { 'accept' },
+        ['<TAB>'] = { 'accept' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1137,7 +1152,7 @@ require('lazy').setup({
     ft = { 'tex' },
 
     init = function()
-      vim.g.vimtex_view_method = 'general'
+      vim.g.vimtex_view_method = 'zathura'
       vim.g.vimtex_quickfix_mode = 0
       -- vim.g.maplocalleader = ',' //needs to be defined before the lazy plugin
 
@@ -1473,6 +1488,7 @@ vim.keymap.set({ 'n', 'v' }, '«', 'X', { desc = 'Delete via ALTGR+d' })
 vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 
 vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
+vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
 vim.keymap.set('c', '<Esc>', function()
   if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
