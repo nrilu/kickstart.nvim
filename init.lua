@@ -923,12 +923,14 @@ require('lazy').setup({
       },
 
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'lazydev' },
+        default = { 'lsp', 'path', 'snippets', 'lazydev', 'omni' },
         providers = {
           lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
           omni = {
             name = 'Omni',
-            module = 'blink.cmp.sources.omni',
+            module = 'blink.cmp.sources.complete_func',
+            opts = { omnifunc = 'vimtex#complete#omnifunc' },
+            -- module = 'blink.cmp.sources.omni',
           },
         },
       },
@@ -1105,18 +1107,18 @@ require('lazy').setup({
     --
     --
     -- ## Claude suggested to rather use this autocompletion onstead of nvim-cmp
-    'saghen/blink.cmp',
-    opts = function(_, opts)
-      -- blink.cmp doesn't have a vimtex source yet, so use omnifunc fallback
-      opts.sources = opts.sources or {}
-      table.insert(opts.sources.default, 'omni')
-      opts.sources.providers = opts.sources.providers or {}
-      opts.sources.providers.omni = {
-        name = 'Omni',
-        module = 'blink.cmp.sources.complete_func',
-        opts = { omnifunc = 'vimtex#complete#omnifunc' },
-      }
-    end,
+    -- 'saghen/blink.cmp',
+    -- opts = function(_, opts)
+    -- blink.cmp doesn't have a vimtex source yet, so use omnifunc fallback
+    -- opts.sources = opts.sources or {}
+    -- table.insert(opts.sources.default, 'omni')
+    -- opts.sources.providers = opts.sources.providers or {}
+    -- opts.sources.providers.omni = {
+    -- name = 'Omni',
+    -- module = 'blink.cmp.sources.complete_func',
+    -- opts = { omnifunc = 'vimtex#complete#omnifunc' },
+    -- }
+    -- end,
   },
 
   --
