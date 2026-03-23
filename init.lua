@@ -1115,6 +1115,18 @@ cmp.setup {
   },
 }
 
+-- Tabsize 2 in markdown
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'markdown',
+  callback = function()
+    vim.opt_local.tabstop = 2
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.softtabstop = 2
+    vim.opt_local.expandtab = true
+    vim.opt_local.foldlevel = 99
+  end,
+})
+
 -- Folds for markdown
 -- vim.api.nvim_create_autocmd('FileType', {
 -- pattern = 'markdown',
@@ -1163,7 +1175,7 @@ vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual
 vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
-vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace>', { noremap = true, desc = 'Bring line to previous line' })
+vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace><Esc>', { noremap = true, desc = 'Bring line to previous line' })
 vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete suggestion' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
