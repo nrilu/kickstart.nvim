@@ -873,6 +873,67 @@ require('lazy').setup({
             end,
           },
         },
+
+        config = function()
+          local ls = require 'luasnip'
+          local s = ls.snippet
+          local t = ls.text_node
+          local i = ls.insert_node
+          local f = ls.function_node
+
+          -- 1. Setup your LaTeX snippets
+          ls.add_snippets('tex', {
+            -- inline math
+            s('mk', { t '$', i(1), t '$' }),
+
+            -- display math
+            s('dm', { t { '\\[', '\t' }, i(1), t { '', '\\]' } }),
+
+            -- fraction
+            s('frac', { t '\\frac{', i(1), t '}{', i(2), t '}' }),
+
+            -- environment
+            s('beg', {
+              t '\\begin{',
+              i(1),
+              t { '}', '\t' },
+              i(2),
+              t { '', '\\end{' },
+              f(function(args)
+                return args[1][1]
+              end, { 1 }),
+              t '}',
+            }),
+
+            -- figure
+            s('fig', {
+              t { '\\begin{figure}[h]', '\t\\centering', '\t\\includegraphics[width=0.8\\textwidth]{' },
+              i(1),
+              t { '}', '\t\\caption{' },
+              i(2),
+              t { '}', '\t\\label{fig:' },
+              i(3),
+              t { '}', '\\end{figure}' },
+            }),
+          })
+
+          -- 2. Define Keymaps for jumping (Essential!)
+          -- These allow you to move between the i(1), i(2) placeholders
+          vim.keymap.set({ 'i', 's' }, '<Tab>', function()
+            if ls.expand_or_jumpable() then
+              ls.expand_or_jump()
+            else
+              vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Tab>', true, false, true), 'n', false)
+            end
+          end, { silent = true })
+
+          vim.keymap.set({ 'i', 's' }, '<S-Tab>', function()
+            if ls.jumpable(-1) then
+              ls.jump(-1)
+            end
+          end, { silent = true })
+        end,
+
         opts = {},
       },
       'folke/lazydev.nvim',
@@ -1083,57 +1144,6 @@ require('lazy').setup({
     end,
   },
 
-  {
-    -- 'hrsh7th/nvim-cmp',
-    -- dependencies = { 'hrsh7th/cmp-nvim-lsp' },
-    -- opts = function(_, opts)
-    -- local cmp = require 'cmp'
-
-    -- opts.sources = cmp.config.sources {
-    -- { name = 'nvim_lsp' },
-    -- { name = 'buffer' },
-    -- }
-
-    -- opts.mapping = cmp.mapping.preset.insert {
-    -- ['<C-Space>'] = cmp.mapping.complete(),
-    -- ['<C-u>'] = cmp.mapping.scroll_docs(-4),
-    -- ['<C-d>'] = cmp.mapping.scroll_docs(4),
-    -- ['<C-l>'] = cmp.mapping.confirm { select = true },
-    -- }
-    -- end,
-    --
-    --
-    --
-    --
-    --
-    -- ## Claude suggested to rather use this autocompletion onstead of nvim-cmp
-    -- 'saghen/blink.cmp',
-    -- opts = function(_, opts)
-    -- blink.cmp doesn't have a vimtex source yet, so use omnifunc fallback
-    -- opts.sources = opts.sources or {}
-    -- table.insert(opts.sources.default, 'omni')
-    -- opts.sources.providers = opts.sources.providers or {}
-    -- opts.sources.providers.omni = {
-    -- name = 'Omni',
-    -- module = 'blink.cmp.sources.complete_func',
-    -- opts = { omnifunc = 'vimtex#complete#omnifunc' },
-    -- }
-    -- end,
-  },
-
-  --
-  --
-  --
-  --
-
-  -- {
-  -- 'rafamadriz/friendly-snippets',
-  -- config = function()
-  -- require('luasnip.loaders.from_vscode').lazy_load()
-  -- require('luasnip.loaders.from_lua').lazy_load { paths = '~/.config/nvim/snippets/' }
-  -- end,
-  -- },
-
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
   --
   --  Here are some example plugins that I've included in the Kickstart repository.
@@ -1200,54 +1210,19 @@ require('lazy').setup({
 
 -- Custom Config
 --
--- Snippets
-vim.api.nvim_create_autocmd('User', {
-  pattern = 'LazyDone',
-  once = true,
-  callback = function()
-    local ls = require 'luasnip'
-    local s = ls.snippet
-    local t = ls.text_node
-    local i = ls.insert_node
-    local f = ls.function_node
-
-    ls.add_snippets('tex', {
-      -- inline math
-      s('mk', { t '$', i(1), t '$' }),
-
-      -- display math
-      s('dm', { t { '\\[', '\t' }, i(1), t { '', '\\]' } }),
-
-      -- fraction
-      s('frac', { t '\\frac{', i(1), t '}{', i(2), t '}' }),
-
-      -- environment
-      s('beg', {
-        t '\\begin{',
-        i(1),
-        t { '}', '\t' },
-        i(2),
-        t { '', '\\end{' },
-        f(function(args)
-          return args[1][1]
-        end, { 1 }),
-        t '}',
-      }),
-
-      -- figure
-      s('fig', {
-        t { '\\begin{figure}[h]', '\t\\centering', '\t\\includegraphics[width=0.8\\textwidth]{' },
-        i(1),
-        t { '}', '\t\\caption{' },
-        i(2),
-        t { '}', '\t\\label{fig:' },
-        i(3),
-        t { '}', '\\end{figure}' },
-      }),
-    })
-  end,
-})
-
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
 --Remember last cursor position
 local userconfig_group = vim.api.nvim_create_augroup('userconfig', { clear = true })
 vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
@@ -1256,16 +1231,6 @@ vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
   pattern = '*',
   command = 'silent! normal! g`"zv',
 })
-
--- Autocomplete shortcut
--- local cmp = require 'cmp'
--- cmp.setup {
--- mapping = cmp.mapping.preset.insert {
---  ['<C-Space>'] = cmp.mapping.confirm {
---   select = true, -- accepts currently selected item
--- },
---},
---}
 
 -- Tabsize 2 in markdown
 vim.api.nvim_create_autocmd('FileType', {
@@ -1391,9 +1356,6 @@ vim.api.nvim_create_autocmd('FileType', {
 --
 --
 --
--- autocmd FileType markdown setlocal foldmethod=syntax
-
--- require 'custom.plugins.markdown-fold'
 
 -- Custom Keymaps
 --
@@ -1458,24 +1420,6 @@ vim.api.nvim_create_autocmd('VimEnter', {
     end
   end,
 })
-
---have J and K work in telescope oldfiles (and all other telescope pickers too)
--- require('telescope').setup {
--- defaults = {
--- mappings = {
--- n = {
--- ['J'] = function(prompt_bufnr)
--- local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
--- current_picker:move_selection(4)
--- end,
--- ['K'] = function(prompt_bufnr)
--- local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
--- current_picker:move_selection(-4)
--- end,
--- },
--- },
--- },
--- }
 
 vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
