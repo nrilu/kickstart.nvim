@@ -986,11 +986,15 @@ require('lazy').setup({
       sources = {
         default = { 'lsp', 'path', 'snippets', 'lazydev', 'omni' },
         providers = {
-          lazydev = { module = 'lazydev.integrations.blink', score_offset = 100 },
+          snippets = {
+            score_offset = 100,
+          },
+          lazydev = { module = 'lazydev.integrations.blink', score_offset = 90 },
           omni = {
             name = 'Omni',
             module = 'blink.cmp.sources.complete_func',
             opts = { omnifunc = 'vimtex#complete#omnifunc' },
+            score_offset = 80,
             -- module = 'blink.cmp.sources.omni',
           },
         },
