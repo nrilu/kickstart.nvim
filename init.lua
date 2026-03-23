@@ -199,7 +199,7 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 --  See `:help wincmd` for a list of all window commands
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+-- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
@@ -418,11 +418,23 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
+        defaults = {
+
+          mappings = {
+            i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+
+            n = {
+              ['J'] = function(prompt_bufnr)
+                local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+                current_picker:move_selection(4)
+              end,
+              ['K'] = function(prompt_bufnr)
+                local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+                current_picker:move_selection(-4)
+              end,
+            },
+          },
+        },
         -- pickers = {}
         extensions = {
           ['ui-select'] = {
@@ -1262,17 +1274,15 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt_local.softtabstop = 2
     vim.opt_local.expandtab = true
     vim.opt_local.foldlevel = 99
-  end,
-})
 
--- Markdown
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'markdown',
-  callback = function()
-    vim.opt_local.tabstop = 2
-    vim.opt_local.shiftwidth = 2
-    vim.opt_local.softtabstop = 2
-    vim.opt_local.expandtab = true
+    vim.opt_local.foldmethod = 'expr'
+    vim.opt_local.foldexpr = 'nvim_treesitter#foldexpr()'
+    vim.opt_local.foldtext = 'v:lua.markdown_fold_text()'
+
+    -- Force treesitter to reparse and update folds
+    vim.defer_fn(function()
+      vim.cmd 'normal! zx' -- Update folds
+    end, 100) -- Small delay to let treesitter finish parsing
   end,
 })
 
@@ -1322,19 +1332,6 @@ vim.keymap.set('n', 'b', 'za', { desc = 'Toggle fold' })
 --
 --
 --
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'markdown',
-  callback = function()
-    vim.opt_local.foldmethod = 'expr'
-    vim.opt_local.foldexpr = 'nvim_treesitter#foldexpr()'
-    vim.opt_local.foldtext = 'v:lua.markdown_fold_text()'
-
-    -- Force treesitter to reparse and update folds
-    vim.defer_fn(function()
-      vim.cmd 'normal! zx' -- Update folds
-    end, 100) -- Small delay to let treesitter finish parsing
-  end,
-})
 
 local function markdown_fold_text()
   local line = vim.fn.getline(vim.v.foldstart)
@@ -1423,7 +1420,8 @@ vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace><Esc>', { noremap = true, desc = 'Bring line to previous line' })
-vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete suggestion' })
+-- this automplete shortcut is now defined in blink.cmp
+-- vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete suggestion' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
 vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
@@ -1460,22 +1458,22 @@ vim.api.nvim_create_autocmd('VimEnter', {
 })
 
 --have J and K work in telescope oldfiles (and all other telescope pickers too)
-require('telescope').setup {
-  defaults = {
-    mappings = {
-      n = {
-        ['J'] = function(prompt_bufnr)
-          local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
-          current_picker:move_selection(4)
-        end,
-        ['K'] = function(prompt_bufnr)
-          local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
-          current_picker:move_selection(-4)
-        end,
-      },
-    },
-  },
-}
+-- require('telescope').setup {
+-- defaults = {
+-- mappings = {
+-- n = {
+-- ['J'] = function(prompt_bufnr)
+-- local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+-- current_picker:move_selection(4)
+-- end,
+-- ['K'] = function(prompt_bufnr)
+-- local current_picker = require('telescope.actions.state').get_current_picker(prompt_bufnr)
+-- current_picker:move_selection(-4)
+-- end,
+-- },
+-- },
+-- },
+-- }
 
 vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
