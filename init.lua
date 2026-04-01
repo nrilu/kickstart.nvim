@@ -567,7 +567,10 @@ require('lazy').setup({
           map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
 
           -- Find references for the word under your cursor.
-          map('grr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          -- map('grr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+          map('grr', function()
+            require('telescope.builtin').lsp_references { initial_mode = 'normal' }
+          end, '[G]oto [R]eferences')
 
           -- Jump to the implementation of the word under your cursor.
           --  Useful when your language has ways of declaring types without an actual implementation.
@@ -908,6 +911,8 @@ require('lazy').setup({
             -- fraction
             s('frac', { t '\\frac{', i(1), t '}{', i(2), t '}' }),
 
+            s('ttt', { t '\\texttt{', i(1), t '}' }),
+
             -- environment
             s('beg', {
               t '\\begin{',
@@ -981,7 +986,7 @@ require('lazy').setup({
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
         -- Accept autocmpletion suggestion with spacebar
-        ['<TAB>'] = { 'accept' },
+        ['<TAB>'] = { 'accept', 'fallback' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1163,7 +1168,24 @@ require('lazy').setup({
       -- vim.o.foldlevel = 4
     end,
   },
-
+  {
+    'nat-418/boole.nvim',
+    config = function()
+      require('boole').setup {
+        mappings = {
+          increment = '<Space>t',
+          -- decrement = "<C-x>",
+        },
+        additions = {
+          { 'Foo', 'Bar' },
+          { 'tic', 'tac', 'toe' },
+        },
+        allow_caps_additions = {
+          { 'enable', 'disable' },
+        },
+      }
+    end,
+  },
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
   --
   --  Here are some example plugins that I've included in the Kickstart repository.
