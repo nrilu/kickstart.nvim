@@ -1015,11 +1015,29 @@ require('lazy').setup({
             name = 'Omni',
             module = 'blink.cmp.sources.complete_func',
             opts = { omnifunc = 'vimtex#complete#omnifunc' },
-            score_offset = 80,
+            score_offset = 110,
             -- module = 'blink.cmp.sources.omni',
           },
         },
+        -- NEW 02.04.2026: Filetype specific overrides
+        -- per_filetype = {
+        -- tex = {
+        -- providers = {
+        -- snippets = { score_offset = 100 }, -- Prioritize snippets in LaTeX
+        -- },
+        -- },
+        -- python = {
+        -- providers = {
+        -- lsp = { score_offset = 100 }, -- Prioritize actual code logic in Python
+        -- snippets = { score_offset = 0 }, -- Keep snippets at the bottom
+        -- },
+        -- },
+        -- },
       },
+
+      -- ADD THIS FUZZY BLOCK HERE:
+      -- fuzzy = {
+      -- },
 
       snippets = { preset = 'luasnip' },
 
@@ -1030,7 +1048,31 @@ require('lazy').setup({
       -- the rust implementation via `'prefer_rust_with_warning'`
       --
       -- See :h blink-cmp-config-fuzzy for more information
-      fuzzy = { implementation = 'lua' },
+      fuzzy = {
+        implementation = 'lua',
+        sorts = {
+          function(a, b)
+            -- Map the LSP kinds to custom priorities.
+            -- Lower number means higher priority.
+            local kind_priority = {
+              [5] = 1, -- Field (bring to top)
+              [10] = 1, -- Property (bring to top)
+              [6] = 2, -- Variable (second priority)
+            }
+
+            local a_prio = kind_priority[a.kind] or 10
+            local b_prio = kind_priority[b.kind] or 10
+
+            -- If they have different priorities, sort by that first
+            if a_prio ~= b_prio then
+              return a_prio < b_prio
+            end
+          end,
+          -- Fallback to the default sorting algorithms for items with the same priority
+          'score',
+          'sort_text',
+        },
+      },
 
       -- Shows a signature help window while you type arguments for a function
       signature = { enabled = true },
