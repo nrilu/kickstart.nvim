@@ -1401,22 +1401,6 @@ vim.api.nvim_create_autocmd('FileType', {
 
 -- Custom Keymaps
 --
-vim.keymap.set({ 'n', 'v' }, '-', function()
-  local col = vim.fn.col '.' -- Current cursor column
-  local last_col = vim.fn.col '$' - 1 -- Last character column (Vim's $ is 1 past the last char)
-  -- If we are not at the end of the line yet
-  if col < last_col then
-    -- Try to move one word forward
-    vim.cmd 'normal! w'
-    -- If 'w' jumped us to the next line, pull it back to the end of the previous line
-    if vim.fn.col '.' < col then
-      vim.cmd 'normal! k$'
-    end
-  else
-    -- If we are already at the end of the line, go to the next word normally
-    vim.cmd 'normal! w'
-  end
-end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last character of a line' })
 
 -- Better movement
 -- vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
@@ -1465,12 +1449,30 @@ vim.api.nvim_create_autocmd('VimEnter', {
 
 vim.keymap.set({ 'n', 'v' }, 'ß', '$', { desc = 'Go to end of line' })
 
-vim.keymap.set({ 'n', 'v' }, 'e', 'w', { desc = 'Next word' })
-vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
+-- vim.keymap.set({ 'n', 'v' }, 'e', 'w', { desc = 'Next word' })
+
+vim.keymap.set({ 'n', 'v' }, 'e', function()
+  local col = vim.fn.col '.' -- Current cursor column
+  local last_col = vim.fn.col '$' - 1 -- Last character column (Vim's $ is 1 past the last char)
+  -- If we are not at the end of the line yet
+  if col < last_col then
+    -- Try to move one word forward
+    vim.cmd 'normal! w'
+    -- If 'w' jumped us to the next line, pull it back to the end of the previous line
+    if vim.fn.col '.' < col then
+      vim.cmd 'normal! k$'
+    end
+  else
+    -- If we are already at the end of the line, go to the next word normally
+    vim.cmd 'normal! w'
+  end
+end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last character of a line' })
+
+-- vim.keymap.set({ 'n', 'v' }, 'E', 'W', { desc = 'Next WORD' })
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
-vim.keymap.set('n', 'ßß', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
+-- vim.keymap.set('n', 'ßß', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
