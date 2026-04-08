@@ -1574,6 +1574,11 @@ vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
+-- vim.keymap.set('n', '<leader>w', 'gsaaW', { noremap = false, desc = 'Surround WORD' })
+vim.keymap.set('n', '<leader>w', function()
+  vim.fn.feedkeys('gsaaW', 'm')
+end, { desc = 'Surround WORD' })
+
 vim.keymap.set('c', '<Esc>', function()
   if vim.fn.getcmdtype() == '/' or vim.fn.getcmdtype() == '?' then
     return '<CR>'
