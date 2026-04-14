@@ -913,6 +913,7 @@ require('lazy').setup({
 
             s('ttt', { t '\\texttt{', i(1), t '}' }),
 
+            s('sc', { t '\\textsc{', i(1), t '}' }),
             -- environment
             s('beg', {
               t '\\begin{',
