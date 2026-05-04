@@ -786,7 +786,7 @@ require('lazy').setup({
                   analysis = {
                     typeCheckingMode = 'off',
                     diagnosticMode = 'openFilesOnly',
-                    useLibraryCodeForTypes = true,
+                    useLibraryCodeForTypes = false,
                     -- Added to fix extrem lag in GB-large repos where the LSP scanned everything (14.01.2026)
                     -- autoSearchPaths = false,
                     -- Changed to false for same problem (14.01.2026)
@@ -1002,12 +1002,21 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        -- documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        completion = {
+          documentation = { auto_show = false, auto_show_delay_ms = 500 },
+          trigger = { prefetch_on_insert = true },
+          list = { max_items = 200 },
+        },
       },
 
       sources = {
         default = { 'lsp', 'path', 'snippets', 'lazydev', 'omni' },
         providers = {
+          lsp = {
+            async = true,
+            timeout_ms = 2000,
+          },
           snippets = {
             score_offset = 100,
           },
@@ -1050,7 +1059,8 @@ require('lazy').setup({
       --
       -- See :h blink-cmp-config-fuzzy for more information
       fuzzy = {
-        implementation = 'lua',
+        -- implementation = 'lua',
+        implementation = 'prefer_rust_with_warning',
         sorts = {
           function(a, b)
             -- Map the LSP kinds to custom priorities.
