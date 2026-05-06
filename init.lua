@@ -1263,7 +1263,7 @@ require('lazy').setup({
     opts = {},
     keys = {
       {
-        's',
+        'b',
         mode = { 'n', 'x', 'o' },
         function()
           require('flash').jump()
@@ -1271,7 +1271,7 @@ require('lazy').setup({
         desc = 'Flash',
       },
       {
-        'S',
+        'B',
         mode = { 'n', 'x', 'o' },
         function()
           require('flash').treesitter()
