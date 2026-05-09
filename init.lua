@@ -458,7 +458,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[S]earch [B]uffers' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -914,6 +914,8 @@ require('lazy').setup({
             s('ttt', { t '\\texttt{', i(1), t '}' }),
 
             s('sc', { t '\\textsc{', i(1), t '}' }),
+
+            s('nrl', { t '\\nrl{', i(1), t '}' }),
             -- environment
             s('beg', {
               t '\\begin{',
@@ -1260,7 +1262,17 @@ require('lazy').setup({
     'folke/flash.nvim',
     event = 'VeryLazy',
     ---@type Flash.Config
-    opts = {},
+    opts = {
+      label = {
+        style = 'inline',
+        before = true,
+        after = false,
+      },
+    },
+    config = function(_, opts)
+      require('flash').setup(opts)
+      vim.api.nvim_set_hl(0, 'FlashLabel', { fg = '#ffffff', bg = '#000000', bold = true })
+    end,
     keys = {
       {
         'b',
@@ -1590,7 +1602,7 @@ end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last 
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
--- vim.keymap.set('n', 'ßß', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
+vim.keymap.set('n', '°°', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
@@ -1634,7 +1646,7 @@ vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
 -- vim.keymap.set('n', '<leader>w', 'gsaaW', { noremap = false, desc = 'Surround WORD' })
-vim.keymap.set('n', '<leader>w', function()
+vim.keymap.set('n', '<leader><leader>', function()
   vim.fn.feedkeys('gsaaW', 'm')
 end, { desc = 'Surround WORD' })
 
