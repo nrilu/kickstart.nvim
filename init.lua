@@ -1663,8 +1663,11 @@ end, { expr = true, desc = 'Search keeps window on first hit even when pressing 
 
 vim.api.nvim_set_hl(0, '@markup.raw.block.markdown', { fg = '#51a8ad' })
 
+-- Move lines up and down
 vim.keymap.set('n', '<A-j>', ':m .+1<CR>==')
 vim.keymap.set('n', '<A-k>', ':m .-2<CR>==')
+vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv")
+vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv")
 
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
