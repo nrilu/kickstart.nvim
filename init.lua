@@ -916,6 +916,8 @@ require('lazy').setup({
             s('sc', { t '\\textsc{', i(1), t '}' }),
 
             s('nrl', { t '\\nrl{', i(1), t '}' }),
+            s('ref', { t '\\ref{', i(1), t '}' }),
+            s('label', { t '\\label{', i(1), t '}' }),
             -- environment
             s('beg', {
               t '\\begin{',
@@ -1316,6 +1318,7 @@ require('lazy').setup({
       },
     },
   },
+
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
   --
   --  Here are some example plugins that I've included in the Kickstart repository.
@@ -1643,6 +1646,7 @@ vim.keymap.set({ 'n', 'v' }, '«', 'X', { desc = 'Delete via ALTGR+d' })
 vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 
 vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
+vim.keymap.set({ 'i' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
 -- vim.keymap.set('n', '<leader>w', 'gsaaW', { noremap = false, desc = 'Surround WORD' })
