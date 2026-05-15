@@ -1605,7 +1605,44 @@ end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last 
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
-vim.keymap.set('n', '°°', ':w<CR>:!./%<CR>', { noremap = true, silent = true, desc = 'Execute current file' })
+vim.keymap.set('n', '°°', function()
+  vim.cmd 'write'
+
+  local file = vim.fn.expand '%:p'
+  if file == '' then
+    vim.notify('Cannot execute: buffer has no file', vim.log.levels.WARN)
+    return
+  end
+
+  -- Pick an interpreter by filetype; fall back to the shebang for anything else.
+  local runners = {
+    python = 'python3',
+    sh = 'bash',
+    bash = 'bash',
+    zsh = 'zsh',
+    lua = 'lua',
+    javascript = 'node',
+    typescript = 'node',
+    ruby = 'ruby',
+    perl = 'perl',
+    r = 'Rscript',
+    go = 'go run',
+  }
+
+  local esc = vim.fn.shellescape(file)
+  local cmd = runners[vim.bo.filetype]
+  if cmd then
+    cmd = cmd .. ' ' .. esc
+  else
+    -- No known interpreter: make it executable and rely on its shebang.
+    vim.fn.system { 'chmod', '+x', file }
+    cmd = esc
+  end
+
+  -- Run from the file's own directory so its relative paths resolve correctly.
+  local dir = vim.fn.shellescape(vim.fn.expand '%:p:h')
+  vim.cmd(string.format('!cd %s && %s', dir, cmd))
+end, { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
   vim.cmd 'normal gcc'
