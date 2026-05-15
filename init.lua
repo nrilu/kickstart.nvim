@@ -1605,6 +1605,8 @@ end, { noremap = true, silent = true, desc = 'Do an extra stop at the very last 
 vim.keymap.set({ 'n', 'v' }, 'w', 'b', { desc = 'Previous word' })
 vim.keymap.set({ 'n', 'v' }, 'W', 'B', { desc = 'Previous WORD' })
 
+local run_output_buf = nil
+
 vim.keymap.set('n', '°°', function()
   vim.cmd 'write'
 
@@ -1639,9 +1641,35 @@ vim.keymap.set('n', '°°', function()
     cmd = esc
   end
 
-  -- Run from the file's own directory so its relative paths resolve correctly.
+  -- Reuse a single output split: drop the previous one (this also closes its
+  -- window and kills any still-running job) before opening a fresh terminal.
+  if run_output_buf and vim.api.nvim_buf_is_valid(run_output_buf) then
+    vim.api.nvim_buf_delete(run_output_buf, { force = true })
+  end
+
+  -- Run from the file's own directory so its relative paths resolve correctly,
+  -- in a terminal split below the current window.
   local dir = vim.fn.shellescape(vim.fn.expand '%:p:h')
-  vim.cmd(string.format('!cd %s && %s', dir, cmd))
+  vim.cmd(string.format('botright 15split | terminal cd %s && %s', dir, cmd))
+  run_output_buf = vim.api.nvim_get_current_buf()
+  local term_win = vim.api.nvim_get_current_win()
+  vim.cmd 'stopinsert'
+
+  -- Keep the output window pinned to the latest line as text streams in
+  -- (a normal-mode terminal does not auto-follow on its own).
+  vim.api.nvim_buf_attach(run_output_buf, false, {
+    on_lines = function()
+      if not vim.api.nvim_buf_is_valid(run_output_buf) then
+        return true -- buffer gone (next run) -> detach
+      end
+      vim.schedule(function()
+        if vim.api.nvim_win_is_valid(term_win) and vim.api.nvim_buf_is_valid(run_output_buf) then
+          local last = vim.api.nvim_buf_line_count(run_output_buf)
+          pcall(vim.api.nvim_win_set_cursor, term_win, { last, 0 })
+        end
+      end)
+    end,
+  })
 end, { noremap = true, silent = true, desc = 'Execute current file' })
 
 vim.keymap.set('n', '<C-j>', function()
