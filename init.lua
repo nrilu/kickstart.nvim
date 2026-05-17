@@ -1033,20 +1033,6 @@ require('lazy').setup({
             -- module = 'blink.cmp.sources.omni',
           },
         },
-        -- NEW 02.04.2026: Filetype specific overrides
-        -- per_filetype = {
-        -- tex = {
-        -- providers = {
-        -- snippets = { score_offset = 100 }, -- Prioritize snippets in LaTeX
-        -- },
-        -- },
-        -- python = {
-        -- providers = {
-        -- lsp = { score_offset = 100 }, -- Prioritize actual code logic in Python
-        -- snippets = { score_offset = 0 }, -- Keep snippets at the bottom
-        -- },
-        -- },
-        -- },
       },
 
       -- ADD THIS FUZZY BLOCK HERE:
@@ -1074,6 +1060,19 @@ require('lazy').setup({
               [10] = 1, -- Property (bring to top)
               [6] = 2, -- Variable (second priority)
             }
+
+            -- In Python, prioritize object/class members (LSP) above snippets.
+            if vim.bo.filetype == 'python' then
+              kind_priority = {
+                [2] = 1, -- Method
+                [3] = 1, -- Function
+                [5] = 1, -- Field
+                [10] = 1, -- Property
+                [6] = 2, -- Variable
+                [21] = 2, -- Constant
+                [15] = 99, -- Snippet (push below members)
+              }
+            end
 
             local a_prio = kind_priority[a.kind] or 10
             local b_prio = kind_priority[b.kind] or 10
@@ -1734,5 +1733,6 @@ vim.keymap.set('n', '<A-k>', ':m .-2<CR>==')
 vim.keymap.set('v', '<A-j>', ":m '>+1<CR>gv=gv")
 vim.keymap.set('v', '<A-k>', ":m '<-2<CR>gv=gv")
 
+-- vim.keymap.set('n', 'B', '<C-w>w')
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
 -- vim.keymap.set({ 'n', 'v' }, 'dd', [["_dd]], { noremap = true, silent = true, desc = 'Delete line without clipboard' })
