@@ -1053,6 +1053,8 @@ require('lazy').setup({
         implementation = 'prefer_rust_with_warning',
         sorts = {
           function(a, b)
+            local is_python = vim.bo.filetype == 'python'
+
             -- Map the LSP kinds to custom priorities.
             -- Lower number means higher priority.
             local kind_priority = {
@@ -1062,8 +1064,9 @@ require('lazy').setup({
             }
 
             -- In Python, prioritize object/class members (LSP) above snippets.
-            if vim.bo.filetype == 'python' then
+            if is_python then
               kind_priority = {
+                [20] = 0, -- EnumMember (your own enum values: DTYPE.CDF, ...) — first
                 [2] = 1, -- Method
                 [3] = 1, -- Function
                 [5] = 1, -- Field
@@ -1080,6 +1083,26 @@ require('lazy').setup({
             -- If they have different priorities, sort by that first
             if a_prio ~= b_prio then
               return a_prio < b_prio
+            end
+
+            -- Within the same tier, show your own (public) fields before
+            -- the standard underscore/dunder members (__init__, _private, ...).
+            if is_python then
+              local function underscore_rank(label)
+                label = label or ''
+                if label:match '^__' then
+                  return 2 -- dunder / special "standard" members last
+                elseif label:match '^_' then
+                  return 1 -- single-underscore "private"
+                end
+                return 0 -- your own public fields first
+              end
+
+              local a_us = underscore_rank(a.label)
+              local b_us = underscore_rank(b.label)
+              if a_us ~= b_us then
+                return a_us < b_us
+              end
             end
           end,
           -- Fallback to the default sorting algorithms for items with the same priority
