@@ -1055,39 +1055,12 @@ require('lazy').setup({
           function(a, b)
             local is_python = vim.bo.filetype == 'python'
 
-            -- Map the LSP kinds to custom priorities.
-            -- Lower number means higher priority.
-            local kind_priority = {
-              [5] = 1, -- Field (bring to top)
-              [10] = 1, -- Property (bring to top)
-              [6] = 2, -- Variable (second priority)
-            }
-
-            -- In Python, prioritize object/class members (LSP) above snippets.
             if is_python then
-              kind_priority = {
-                [20] = 0, -- EnumMember (your own enum values: DTYPE.CDF, ...) — first
-                [2] = 1, -- Method
-                [3] = 1, -- Function
-                [5] = 1, -- Field
-                [10] = 1, -- Property
-                [6] = 2, -- Variable
-                [21] = 2, -- Constant
-                [15] = 99, -- Snippet (push below members)
-              }
-            end
+              -- Keep only two light rules on top of blink's default
+              -- score sorting, so Python completion stays close to default.
 
-            local a_prio = kind_priority[a.kind] or 10
-            local b_prio = kind_priority[b.kind] or 10
-
-            -- If they have different priorities, sort by that first
-            if a_prio ~= b_prio then
-              return a_prio < b_prio
-            end
-
-            -- Within the same tier, show your own (public) fields before
-            -- the standard underscore/dunder members (__init__, _private, ...).
-            if is_python then
+              -- 1. Your own members before the standard underscore/dunder
+              --    members (__init__, _private, ...).
               local function underscore_rank(label)
                 label = label or ''
                 if label:match '^__' then
@@ -1095,13 +1068,52 @@ require('lazy').setup({
                 elseif label:match '^_' then
                   return 1 -- single-underscore "private"
                 end
-                return 0 -- your own public fields first
+                return 0 -- your own public members first
               end
 
               local a_us = underscore_rank(a.label)
               local b_us = underscore_rank(b.label)
               if a_us ~= b_us then
                 return a_us < b_us
+              end
+
+              -- 2. Values (fields, properties, variables, constants, enum
+              --    members) before functions/methods; snippets last.
+              local value_kinds = {
+                [5] = true, -- Field
+                [10] = true, -- Property
+                [6] = true, -- Variable
+                [12] = true, -- Value
+                [20] = true, -- EnumMember
+                [21] = true, -- Constant
+              }
+              local function py_rank(item)
+                if item.kind == 15 then -- Snippet
+                  return 2
+                elseif value_kinds[item.kind] then
+                  return 0 -- values first
+                end
+                return 1 -- functions / methods / everything else
+              end
+
+              local a_prio = py_rank(a)
+              local b_prio = py_rank(b)
+              if a_prio ~= b_prio then
+                return a_prio < b_prio
+              end
+
+              -- Otherwise fall through to default score sorting below.
+            else
+              -- Non-Python: keep fields/properties on top, variables next.
+              local kind_priority = {
+                [5] = 1, -- Field
+                [10] = 1, -- Property
+                [6] = 2, -- Variable
+              }
+              local a_prio = kind_priority[a.kind] or 10
+              local b_prio = kind_priority[b.kind] or 10
+              if a_prio ~= b_prio then
+                return a_prio < b_prio
               end
             end
           end,
