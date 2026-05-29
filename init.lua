@@ -1750,7 +1750,7 @@ vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
 -- vim.keymap.set('n', '<leader>w', 'gsaaW', { noremap = false, desc = 'Surround WORD' })
 vim.keymap.set('n', '<leader><leader>', function()
-  vim.fn.feedkeys('gsaaW', 'm')
+  vim.fn.feedkeys('gsaiW', 'm')
 end, { desc = 'Surround WORD' })
 
 vim.keymap.set('c', '<Esc>', function()
