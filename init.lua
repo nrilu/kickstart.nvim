@@ -1056,10 +1056,32 @@ require('lazy').setup({
             local is_python = vim.bo.filetype == 'python'
 
             if is_python then
-              -- Keep only two light rules on top of blink's default
-              -- score sorting, so Python completion stays close to default.
+              -- A few light rules on top of blink's default score
+              -- sorting, so Python completion stays close to default.
 
-              -- 1. Your own members before the standard underscore/dunder
+              -- 1. Symbols you defined or already imported (in scope) rank
+              --    above library auto-import suggestions. Pyright tags a
+              --    not-yet-imported library symbol (numpy, pandas, ...) with
+              --    detail = "Auto-import" and labelDetails.description = the
+              --    source module; your own in-scope symbols carry neither.
+              --    This keeps your own names on top instead of being buried
+              --    under the hundreds of auto-import candidates a big
+              --    library exposes.
+              local function is_library_autoimport(item)
+                if item.detail == 'Auto-import' then
+                  return true
+                end
+                local ld = item.labelDetails
+                return ld ~= nil and ld.description ~= nil and ld.description ~= ''
+              end
+
+              local a_lib = is_library_autoimport(a) and 1 or 0
+              local b_lib = is_library_autoimport(b) and 1 or 0
+              if a_lib ~= b_lib then
+                return a_lib < b_lib
+              end
+
+              -- 2. Your own members before the standard underscore/dunder
               --    members (__init__, _private, ...).
               local function underscore_rank(label)
                 label = label or ''
@@ -1077,7 +1099,7 @@ require('lazy').setup({
                 return a_us < b_us
               end
 
-              -- 2. Values (fields, properties, variables, constants, enum
+              -- 3. Values (fields, properties, variables, constants, enum
               --    members) before functions/methods; snippets last.
               local value_kinds = {
                 [5] = true, -- Field
