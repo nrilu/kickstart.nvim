@@ -992,6 +992,9 @@ require('lazy').setup({
         preset = 'default',
         -- Accept autocmpletion suggestion with spacebar
         ['<TAB>'] = { 'accept', 'fallback' },
+        -- Free <C-k> so it triggers the built-in digraph (e.g. <C-k>;a -> ä)
+        -- instead of blink's signature-help toggle.
+        ['<C-k>'] = { 'fallback' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -1601,6 +1604,9 @@ vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace><Esc>', { noremap = true, desc = 'Bring line to previous line' })
 -- this automplete shortcut is now defined in blink.cmp
 -- vim.keymap.set({ 'i' }, '<C-Space>', '<C-y>', { noremap = true, desc = 'Select autocmplete suggestion' })
+
+-- The ä key is remapped to / (see below), so use <C-k> then ä to insert a literal ä.
+vim.keymap.set('i', '<C-k>ä', 'ä', { noremap = true, desc = 'Insert literal ä' })
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'gj', { noremap = true, silent = true, desc = 'Down one visual line' })
 vim.keymap.set({ 'n', 'v' }, 'k', 'gk', { noremap = true, silent = true })
