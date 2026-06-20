@@ -1509,6 +1509,13 @@ vim.api.nvim_create_autocmd('FileType', {
     end
   end,
 })
+-- Rust
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'rust',
+  callback = function()
+    pcall(vim.cmd.colorscheme, 'gruvbox') -- pick any installed theme
+  end,
+})
 
 -- Folds for markdown
 -- vim.api.nvim_create_autocmd('FileType', {
