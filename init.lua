@@ -1627,7 +1627,6 @@ vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '+', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '++', ':wq<CR>', { desc = 'Save and quit' })
 
-vim.keymap.set('n', '<C-b>', '<Cmd>Neotree toggle<CR>')
 
 -- See recent files
 -- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')

@@ -12,12 +12,16 @@ return {
   lazy = false,
   keys = {
     { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
+    -- From a file: open and focus the tree. (Closing from inside the tree is
+    -- handled by the buffer-local '<C-b>' mapping below.)
+    { '<C-b>', '<Cmd>Neotree focus<CR>', desc = 'Focus Neotree', silent = true },
   },
   opts = {
     filesystem = {
       window = {
         mappings = {
           ['\\'] = 'close_window',
+          ['<C-b>'] = 'close_window', -- press again to close the tree and return to the file
           ['-'] = 'toggle_node', -- open folder
           ['l'] = 'toggle_node', -- open folder
           ['.'] = 'close_node', -- close folder
