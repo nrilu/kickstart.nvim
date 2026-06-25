@@ -697,7 +697,18 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {
+          cmd = {
+            'clangd',
+            '--background-index',
+            '--clang-tidy',
+            '--header-insertion=never',
+            '--completion-style=detailed',
+            '--function-arg-placeholders',
+          },
+          -- clangd emits richer semantic tokens (params, members, calls vs.
+          -- defs) which the railscasts colorscheme maps to @lsp.* groups.
+        },
         -- gopls = {},
         -- pyright = {},
         bashls = {},
@@ -1167,7 +1178,6 @@ require('lazy').setup({
           comments = { italic = false }, -- Disable italics in comments
         },
       }
-
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
@@ -1175,6 +1185,7 @@ require('lazy').setup({
     end,
   },
 
+  -- Add here extra themes to download
   {
     'catppuccin/nvim',
     name = 'catppuccin',
@@ -1185,6 +1196,12 @@ require('lazy').setup({
     priority = 1000,
     config = true,
   },
+  {
+    'ayu-theme/ayu-vim',
+    priority = 10000,
+    -- config = true,
+  },
+
   --
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
@@ -1516,6 +1533,20 @@ vim.api.nvim_create_autocmd('FileType', {
     pcall(vim.cmd.colorscheme, 'gruvbox') -- pick any installed theme
   end,
 })
+-- C++
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'cpp',
+  callback = function()
+    pcall(vim.cmd.colorscheme, 'railscasts') -- colors/railscasts.lua (ported from the CLion .icls)
+  end,
+})
+-- Python
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'py',
+  callback = function()
+    pcall(vim.cmd.colorscheme, 'hybrid') -- colors/railscasts.lua (ported from the CLion .icls)
+  end,
+})
 
 -- Folds for markdown
 -- vim.api.nvim_create_autocmd('FileType', {
@@ -1626,7 +1657,6 @@ vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
 vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '+', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '++', ':wq<CR>', { desc = 'Save and quit' })
-
 
 -- See recent files
 -- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')
