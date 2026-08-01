@@ -1020,12 +1020,9 @@ require('lazy').setup({
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        -- documentation = { auto_show = false, auto_show_delay_ms = 500 },
-        completion = {
-          documentation = { auto_show = false, auto_show_delay_ms = 500 },
-          trigger = { prefetch_on_insert = true },
-          list = { max_items = 200 },
-        },
+        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        trigger = { prefetch_on_insert = true },
+        list = { max_items = 200 },
       },
 
       sources = {
@@ -1257,6 +1254,38 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    -- Compat shim for nvim 0.12 + nvim-treesitter's (archived) master branch.
+    --
+    -- 0.12 removed the `all` option of vim.treesitter.query.add_predicate()/add_directive():
+    -- handlers now always receive a *list* of nodes per capture. master still registers with
+    -- `all = false` and indexes the match as a single node, so e.g. markdown's
+    -- `#set-lang-from-info-string!` hands a plain table to get_node_text(), which blows up as
+    --   treesitter.lua:197: attempt to call method 'range' (a nil value)
+    -- on every fenced code block. Re-wrap those legacy handlers so they still see one node,
+    -- exactly as the old `all = false` path did (it passed the last node of the capture).
+    --
+    -- Delete this whole block when migrating to the `main` branch, which targets 0.12 natively.
+    init = function()
+      local tsq = vim.treesitter.query
+      local function unwrap(handler)
+        return function(match, ...)
+          local single = {}
+          for id, nodes in pairs(match) do
+            single[id] = type(nodes) == 'table' and nodes[#nodes] or nodes
+          end
+          return handler(single, ...)
+        end
+      end
+      for _, register in ipairs { 'add_predicate', 'add_directive' } do
+        local orig = tsq[register]
+        tsq[register] = function(name, handler, opts)
+          if type(opts) == 'table' and opts.all == false then
+            handler = unwrap(handler)
+          end
+          return orig(name, handler, opts)
+        end
+      end
+    end,
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'python', 'query', 'vim', 'vimdoc' },
@@ -1293,6 +1322,11 @@ require('lazy').setup({
     init = function()
       vim.g.vimtex_view_method = 'zathura'
       vim.g.vimtex_quickfix_mode = 0
+      -- VimTeX raised its floor to nvim-0.12.4 in a pure `chore:` commit (1d27d952) that
+      -- touched only the docs and the version guards -- nothing in it uses a 0.12.4-only
+      -- API. We run 0.12.3, so the guard is a false negative. Drop this once nvim is
+      -- upgraded past 0.12.4. See :h vimtex_version_check
+      vim.g.vimtex_version_check = 0
       -- vim.g.maplocalleader = ',' //needs to be defined before the lazy plugin
 
       -- vim.o.foldmethod = 'expr'
@@ -1602,6 +1636,36 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Add second pair of braces around Latex Bib entries to force upper cases
+vim.keymap.set('n', '<leader>bt', function()
+  local row = vim.api.nvim_win_get_cursor(0)[1]
+  local line = vim.api.nvim_buf_get_lines(0, row - 1, row, false)[1]
+
+  if not line:match 'title%s*=%s*{' then
+    vim.notify('No title field on this line', vim.log.levels.WARN)
+    return
+  end
+
+  if line:match 'title%s*=%s*{{' then
+    vim.notify('Already double-braced', vim.log.levels.WARN)
+    return
+  end
+
+  -- add the opening brace on the current line
+  local new_open = line:gsub('(title%s*=%s*){', '%1{{', 1)
+  vim.api.nvim_buf_set_lines(0, row - 1, row, false, { new_open })
+
+  -- find the closing },  — could be the same line or a later one
+  local total = vim.api.nvim_buf_line_count(0)
+  for i = row, total do
+    local l = vim.api.nvim_buf_get_lines(0, i - 1, i, false)[1]
+    if l:match '}%s*,?%s*$' then
+      local new_close = l:gsub('}(,?)%s*$', '}}%1')
+      vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_close })
+      break
+    end
+  end
+end, { desc = 'Wrap BibTeX title in extra braces' })
 --
 --
 --
@@ -1635,8 +1699,8 @@ vim.api.nvim_create_autocmd('FileType', {
 -- Better movement
 -- vim.keymap.set({ 'n', 'v' }, '-', 'w', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, '.', 'b', { noremap = true })
-vim.keymap.set({ 'n', 'v' }, 'J', '4gj', { noremap = true, desc = 'Down 4 visual lines' })
-vim.keymap.set({ 'n', 'v' }, 'K', '4gk', { noremap = true })
+vim.keymap.set({ 'n', 'v' }, 'J', '6gj', { noremap = true, desc = 'Down multiple visual lines' })
+vim.keymap.set({ 'n', 'v' }, 'K', '6gk', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, 'm', 'h', { noremap = true })
 vim.keymap.set({ 'n', 'v' }, ',', 'l', { noremap = true })
 vim.keymap.set({ 'n' }, 'M', 'I<Esc>v0s<Backspace><Esc>', { noremap = true, desc = 'Bring line to previous line' })
