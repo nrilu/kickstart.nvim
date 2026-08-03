@@ -1876,6 +1876,9 @@ vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'i' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 
+vim.keymap.set('i', '<A-l>', '<C-g>U<Right>', { desc = 'Move insert cursor one right' })
+vim.keymap.set('i', '<A-h>', '<C-g>U<Left>', { desc = 'Move insert cursor one left' })
+
 -- vim.keymap.set('n', '<leader>w', 'gsaaW', { noremap = false, desc = 'Surround WORD' })
 vim.keymap.set('n', '<leader><leader>', function()
   vim.fn.feedkeys('gsaiW', 'm')
