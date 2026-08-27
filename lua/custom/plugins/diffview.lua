@@ -11,26 +11,53 @@
 --                                  branched off master (the "PR view")
 --   :DiffviewFileHistory %         history of the current file
 --
--- Inside the view: <tab>/<s-tab> next/prev file, ]c/[c next/prev hunk,
--- <leader>e focus file panel, <leader>b toggle it, q or :DiffviewClose to quit.
+-- Inside either view (German-layout friendly, no bracket keys):
+--   ö / Ö   next / previous hunk
+--   ü / Ü   next / previous file
+--   q       close
+-- Unified view also has <CR> to fold/unfold the file under the cursor.
+--
+-- Two ways to look at a diff:
+--   <leader>gd/gc/gr  side-by-side (diffview), old on the left, new on the right
+--   <leader>gu/gU     unified -- one column of -/+ lines, like `git diff` in a
+--                     terminal (see `unified_diff` below)
+-- Both use the same colors: no backgrounds, green for added, red for removed.
 
---- Pick a branch/remote ref and diff the current branch against it.
-local function diff_against_ref()
-  local refs = vim.fn.systemlist { 'git', 'for-each-ref', '--format=%(refname:short)', '--sort=-committerdate', 'refs/heads', 'refs/remotes' }
-  if vim.v.shell_error ~= 0 then
+--- Run git in the current file's directory, so this also works on a repo that
+--- isn't nvim's cwd.
+local function git(args)
+  local file = vim.api.nvim_buf_get_name(0)
+  local dir = file ~= '' and vim.fs.dirname(file) or vim.fn.getcwd()
+  if vim.fn.isdirectory(dir) ~= 1 then
+    dir = vim.fn.getcwd()
+  end
+  return vim.system(vim.list_extend({ 'git' }, args), { cwd = dir, text = true }):wait()
+end
+
+--- Pick a branch/remote ref, then hand it to `on_choice`.
+local function pick_ref(prompt, on_choice)
+  local res = git { 'for-each-ref', '--format=%(refname:short)', '--sort=-committerdate', 'refs/heads', 'refs/remotes' }
+  if res.code ~= 0 then
     vim.notify('Not inside a git repository', vim.log.levels.WARN)
     return
   end
 
-  refs = vim.tbl_filter(function(ref)
-    return not vim.endswith(ref, '/HEAD')
-  end, refs)
+  local refs = vim.tbl_filter(function(ref)
+    return ref ~= '' and not vim.endswith(ref, '/HEAD')
+  end, vim.split(res.stdout, '\n', { trimempty = true }))
 
-  vim.ui.select(refs, { prompt = 'Diff HEAD against (merge-base):' }, function(choice)
+  vim.ui.select(refs, { prompt = prompt }, function(choice)
     if choice then
-      -- three-dot: changes on HEAD since it diverged from the chosen ref
-      vim.cmd('DiffviewOpen ' .. vim.fn.fnameescape(choice) .. '...HEAD')
+      on_choice(choice)
     end
+  end)
+end
+
+--- Side-by-side diff of HEAD against a picked ref.
+local function diff_against_ref()
+  pick_ref('Diff HEAD against (merge-base):', function(ref)
+    -- three-dot: changes on HEAD since it diverged from the chosen ref
+    vim.cmd('DiffviewOpen ' .. vim.fn.fnameescape(ref) .. '...HEAD')
   end)
 end
 
@@ -39,6 +66,96 @@ local function diff_range()
   vim.ui.input({ prompt = 'DiffviewOpen ' }, function(input)
     if input and input ~= '' then
       vim.cmd('DiffviewOpen ' .. input)
+    end
+  end)
+end
+
+-- ---------------------------------------------------------------------------
+-- Unified diff: a single column with -/+ lines interleaved
+-- ---------------------------------------------------------------------------
+-- diffview is split-only -- its one single-window layout (`diff1_plain`) is for
+-- merge conflicts and shows no diff at all -- so this is plain `git diff`
+-- output dropped into a scratch buffer with `filetype=diff`. The treesitter
+-- `diff` parser (already in your ensure_installed list) colors it, and it stays
+-- an ordinary buffer: searchable, yankable, foldable per file.
+local unified_nr = 0
+
+--- @param range string|nil  e.g. "master...HEAD", "HEAD~3", "" for working tree
+local function unified_diff(range)
+  local args = vim.split(range or '', '%s+', { trimempty = true })
+  local res = git(vim.list_extend({ 'diff' }, args))
+  if res.code ~= 0 then
+    vim.notify('git diff failed: ' .. (res.stderr or ''), vim.log.levels.ERROR)
+    return
+  end
+
+  local lines = vim.split(res.stdout or '', '\n')
+  if lines[#lines] == '' then
+    table.remove(lines)
+  end
+  if #lines == 0 then
+    vim.notify('No differences', vim.log.levels.INFO)
+    return
+  end
+
+  vim.cmd 'tabnew'
+  local buf, win = vim.api.nvim_get_current_buf(), vim.api.nvim_get_current_win()
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  unified_nr = unified_nr + 1
+  local label = (range and range ~= '') and range or 'working tree'
+  pcall(vim.api.nvim_buf_set_name, buf, string.format('git diff %s [%d]', label, unified_nr))
+
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].bufhidden = 'wipe'
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].filetype = 'diff'
+  vim.bo[buf].modifiable = false
+
+  -- bare terminal look: no gutter, no line numbers, no wrapping
+  vim.wo[win].number = false
+  vim.wo[win].relativenumber = false
+  vim.wo[win].signcolumn = 'no'
+  vim.wo[win].cursorline = false
+  vim.wo[win].wrap = false
+  -- one fold per file, all open to start with
+  vim.wo[win].foldmethod = 'expr'
+  vim.wo[win].foldexpr = "getline(v:lnum) =~ '^diff --git' ? '>1' : '1'"
+  vim.wo[win].foldlevel = 99
+
+  -- Navigation on umlaut keys: [ and ] need AltGr on a German layout, and
+  -- a/A is taken by the global ä -> / remap, so: ö/Ö hunks, ü/Ü files.
+  local function map(lhs, rhs, desc)
+    vim.keymap.set('n', lhs, rhs, { buffer = buf, desc = desc })
+  end
+  map('q', '<cmd>tabclose<cr>', 'Close the diff')
+  map('ö', function()
+    vim.fn.search('^@@', 'W')
+  end, 'Next hunk')
+  map('Ö', function()
+    vim.fn.search('^@@', 'bW')
+  end, 'Previous hunk')
+  map('ü', function()
+    vim.fn.search('^diff --git', 'W')
+  end, 'Next file')
+  map('Ü', function()
+    vim.fn.search('^diff --git', 'bW')
+  end, 'Previous file')
+  map('<CR>', 'za', 'Fold / unfold this file')
+end
+
+--- Unified diff of HEAD against a picked ref.
+local function unified_against_ref()
+  pick_ref('Unified diff of HEAD against (merge-base):', function(ref)
+    unified_diff(ref .. '...HEAD')
+  end)
+end
+
+--- Unified diff of a free-form range; empty input = working tree.
+local function unified_range()
+  vim.ui.input({ prompt = 'git diff ' }, function(input)
+    if input then
+      unified_diff(input)
     end
   end)
 end
@@ -76,6 +193,19 @@ local diff_hl = {
   CustomDiffOldText = { fg = palette.del_text, bold = true },
   CustomDiffNewLine = { fg = palette.add },
   CustomDiffNewText = { fg = palette.add_text, bold = true },
+  -- unified `git diff` buffers (filetype=diff): treesitter captures first,
+  -- then the legacy vim-syntax groups as a fallback
+  ['@diff.plus'] = { fg = palette.add },
+  ['@diff.minus'] = { fg = palette.del },
+  ['@diff.delta'] = { fg = '#e5c07b' },
+  diffAdded = { fg = palette.add },
+  diffRemoved = { fg = palette.del },
+  diffChanged = { fg = '#e5c07b' },
+  diffNewFile = { fg = palette.add },
+  diffOldFile = { fg = palette.del },
+  diffFile = { fg = '#61afef', bold = true }, -- "diff --git a/x b/x"
+  diffLine = { fg = palette.dim }, -- "@@ -1,7 +1,9 @@"
+  diffIndexLine = { fg = palette.dim },
   -- file panel
   DiffviewStatusAdded = { fg = palette.add },
   DiffviewStatusUntracked = { fg = palette.add },
@@ -163,39 +293,55 @@ return {
       { '<leader>gr', diff_range, desc = '[G]it diff [r]evision range' },
       { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = '[G]it file [h]istory (current file)' },
       { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = '[G]it [H]istory (whole repo)' },
+      { '<leader>gu', unified_against_ref, desc = '[G]it [u]nified diff vs branch' },
+      { '<leader>gU', unified_range, desc = '[G]it [U]nified diff, custom range' },
       { '<leader>gq', '<cmd>DiffviewClose<cr>', desc = '[G]it diff [q]uit' },
     },
-    opts = {
-      enhanced_diff_hl = true, -- clearer word-level highlighting
-      view = {
-        default = { layout = 'diff2_vertical' }, -- old | new, side by side
-        merge_tool = { layout = 'diff3_mixed' },
-        file_history = { layout = 'diff2_horizontal' },
-      },
-      file_panel = {
-        listing_style = 'tree',
-        win_config = { position = 'left', width = 55 },
-      },
-      keymaps = {
+    -- a function so `diffview.actions` can be required only once the plugin
+    -- is actually on the runtimepath
+    opts = function()
+      local actions = require 'diffview.actions'
+
+      -- Ergonomic navigation for a German layout: ] and [ sit behind AltGr,
+      -- so hunks go on ö/Ö and files on ü/Ü. (ä is the global remap for /,
+      -- b is flash, + is save -- all left alone.)
+      local panel_nav = {
+        { 'n', 'ü', actions.select_next_entry, { desc = 'Next file' } },
+        { 'n', 'Ü', actions.select_prev_entry, { desc = 'Previous file' } },
+        { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close diffview' } },
+      }
+      -- hunk jumps only make sense in the diff windows themselves
+      local view_nav = vim.list_extend({
+        { 'n', 'ö', ']c', { desc = 'Next hunk' } },
+        { 'n', 'Ö', '[c', { desc = 'Previous hunk' } },
+      }, panel_nav)
+
+      return {
+        enhanced_diff_hl = true, -- clearer word-level highlighting
         view = {
-          { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close diffview' } },
+          default = { layout = 'diff2_horizontal' }, -- old | new, side by side
+          merge_tool = { layout = 'diff3_mixed' },
+          file_history = { layout = 'diff2_horizontal' },
         },
         file_panel = {
-          { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close diffview' } },
+          listing_style = 'tree',
+          win_config = { position = 'left', width = 55 },
         },
-        file_history_panel = {
-          { 'n', 'q', '<cmd>DiffviewClose<cr>', { desc = 'Close diffview' } },
+        keymaps = {
+          view = view_nav,
+          file_panel = panel_nav,
+          file_history_panel = panel_nav,
         },
-      },
-      hooks = {
-        -- Runs with the diff buffer/window current, after diffview applied its
-        -- own window options -- so this remap wins.
-        diff_buf_win_enter = function(bufnr, winid, ctx)
-          strip_syntax(bufnr)
-          vim.wo[winid].winhighlight = ctx.symbol == 'a' and winhl.old or winhl.new
-        end,
-      },
-    },
+        hooks = {
+          -- Runs with the diff buffer/window current, after diffview applied
+          -- its own window options -- so this remap wins.
+          diff_buf_win_enter = function(bufnr, winid, ctx)
+            strip_syntax(bufnr)
+            vim.wo[winid].winhighlight = ctx.symbol == 'a' and winhl.old or winhl.new
+          end,
+        },
+      }
+    end,
     config = function(_, opts)
       require('diffview').setup(opts)
       apply_diff_hl()
