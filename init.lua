@@ -835,6 +835,10 @@ require('lazy').setup({
     opts = {
       notify_on_error = false,
       format_on_save = function(bufnr)
+        --x Nicco: temporary switch, see :FormatDisable / :FormatEnable / <leader>tf
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return nil
+        end
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
@@ -1760,6 +1764,26 @@ vim.keymap.set('n', 'QQ', ':q!<CR>', { desc = 'Quit without saving' })
 vim.keymap.set('n', '<C-s>', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '+', ':w<CR>', { desc = 'Save' })
 vim.keymap.set('n', '++', ':wq<CR>', { desc = 'Save and quit' })
+
+-- Turn autoformat-on-save off for a while (e.g. while editing a .bib file).
+-- Without a bang it only affects the current buffer, with a bang all buffers.
+vim.api.nvim_create_user_command('FormatDisable', function(args)
+  if args.bang then
+    vim.g.disable_autoformat = true
+  else
+    vim.b.disable_autoformat = true
+  end
+end, { desc = 'Disable autoformat-on-save', bang = true })
+
+vim.api.nvim_create_user_command('FormatEnable', function()
+  vim.b.disable_autoformat = false
+  vim.g.disable_autoformat = false
+end, { desc = 'Re-enable autoformat-on-save' })
+
+vim.keymap.set('n', '<leader>tf', function()
+  vim.b.disable_autoformat = not vim.b.disable_autoformat
+  vim.notify('Autoformat on save: ' .. (vim.b.disable_autoformat and 'OFF (this buffer)' or 'ON'))
+end, { desc = '[T]oggle [F]ormat on save (buffer)' })
 
 -- See recent files
 -- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')
