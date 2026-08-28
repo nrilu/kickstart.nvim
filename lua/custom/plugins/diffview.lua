@@ -18,9 +18,9 @@
 -- Unified view also has <CR> to fold/unfold the file under the cursor.
 --
 -- Two ways to look at a diff:
---   <leader>gd/gc/gr  side-by-side (diffview), old on the left, new on the right
---   <leader>gu/gU     unified -- one column of -/+ lines, like `git diff` in a
+--   <leader>gd/gu/gU  unified -- one column of -/+ lines, like `git diff` in a
 --                     terminal (see `unified_diff` below)
+--   <leader>gD/gc/gr  side-by-side (diffview), old on the left, new on the right
 -- Both use the same colors: no backgrounds, green for added, red for removed.
 
 --- Run git in the current file's directory, so this also works on a repo that
@@ -81,7 +81,8 @@ end
 local unified_nr = 0
 
 --- @param range string|nil  e.g. "master...HEAD", "HEAD~3", "" for working tree
-local function unified_diff(range)
+--- @param label string|nil  buffer name to show instead of `range`
+local function unified_diff(range, label)
   local args = vim.split(range or '', '%s+', { trimempty = true })
   local res = git(vim.list_extend({ 'diff' }, args))
   if res.code ~= 0 then
@@ -103,7 +104,7 @@ local function unified_diff(range)
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 
   unified_nr = unified_nr + 1
-  local label = (range and range ~= '') and range or 'working tree'
+  label = label or ((range and range ~= '') and range or 'working tree')
   pcall(vim.api.nvim_buf_set_name, buf, string.format('git diff %s [%d]', label, unified_nr))
 
   vim.bo[buf].buftype = 'nofile'
@@ -144,10 +145,18 @@ local function unified_diff(range)
   map('<CR>', 'za', 'Fold / unfold this file')
 end
 
---- Unified diff of HEAD against a picked ref.
+--- Unified diff of the *working tree* against a picked ref.
+--- `git diff a...b` always ends at a commit, so the merge base is resolved by
+--- hand and diffed against the working tree -- that way uncommitted edits show
+--- up too, not just what is already in HEAD.
 local function unified_against_ref()
-  pick_ref('Unified diff of HEAD against (merge-base):', function(ref)
-    unified_diff(ref .. '...HEAD')
+  pick_ref('Unified diff of working tree against (merge-base):', function(ref)
+    local base = ref
+    local res = git { 'merge-base', ref, 'HEAD' }
+    if res.code == 0 then
+      base = vim.trim(res.stdout or '')
+    end
+    unified_diff(base, ref .. '...working tree')
   end)
 end
 
@@ -288,7 +297,14 @@ return {
       'DiffviewRefresh',
     },
     keys = {
-      { '<leader>gd', '<cmd>DiffviewOpen<cr>', desc = '[G]it [d]iff working tree' },
+      {
+        '<leader>gd',
+        function()
+          unified_diff 'HEAD'
+        end,
+        desc = '[G]it [d]iff working tree (unified)',
+      },
+      { '<leader>gD', '<cmd>DiffviewOpen<cr>', desc = '[G]it [D]iff working tree (side-by-side)' },
       { '<leader>gc', diff_against_ref, desc = '[G]it diff vs [c]hosen branch' },
       { '<leader>gr', diff_range, desc = '[G]it diff [r]evision range' },
       { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = '[G]it file [h]istory (current file)' },
