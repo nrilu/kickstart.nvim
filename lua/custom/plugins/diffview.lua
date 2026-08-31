@@ -15,7 +15,8 @@
 --   ö / Ö   next / previous hunk
 --   ü / Ü   next / previous file
 --   q       close
--- Unified view also has <CR> to fold/unfold the file under the cursor.
+-- Unified view also has <CR> to fold/unfold the file under the cursor, and r to
+-- re-run the diff (cursor stays on the same line of the same file).
 --
 -- Two ways to look at a diff:
 --   <leader>gd/gu/gU  unified -- one column of -/+ lines, like `git diff` in a
@@ -23,15 +24,21 @@
 --   <leader>gD/gc/gr  side-by-side (diffview), old on the left, new on the right
 -- Both use the same colors: no backgrounds, green for added, red for removed.
 
---- Run git in the current file's directory, so this also works on a repo that
---- isn't nvim's cwd.
-local function git(args)
+--- The current file's directory, so this also works on a repo that isn't nvim's
+--- cwd. Scratch buffers (the unified diff itself) have no real path, hence the
+--- isdirectory check.
+local function git_dir()
   local file = vim.api.nvim_buf_get_name(0)
   local dir = file ~= '' and vim.fs.dirname(file) or vim.fn.getcwd()
   if vim.fn.isdirectory(dir) ~= 1 then
     dir = vim.fn.getcwd()
   end
-  return vim.system(vim.list_extend({ 'git' }, args), { cwd = dir, text = true }):wait()
+  return dir
+end
+
+--- @param dir string|nil  where to run; defaults to the current file's directory
+local function git(args, dir)
+  return vim.system(vim.list_extend({ 'git' }, args), { cwd = dir or git_dir(), text = true }):wait()
 end
 
 --- Pick a branch/remote ref, then hand it to `on_choice`.
@@ -80,14 +87,12 @@ end
 -- an ordinary buffer: searchable, yankable, foldable per file.
 local unified_nr = 0
 
---- @param range string|nil  e.g. "master...HEAD", "HEAD~3", "" for working tree
---- @param label string|nil  buffer name to show instead of `range`
-local function unified_diff(range, label)
+--- Run the diff and return its lines, or nil plus a reason.
+local function run_diff(range, dir)
   local args = vim.split(range or '', '%s+', { trimempty = true })
-  local res = git(vim.list_extend({ 'diff' }, args))
+  local res = git(vim.list_extend({ 'diff' }, args), dir)
   if res.code ~= 0 then
-    vim.notify('git diff failed: ' .. (res.stderr or ''), vim.log.levels.ERROR)
-    return
+    return nil, 'git diff failed: ' .. (res.stderr or '')
   end
 
   local lines = vim.split(res.stdout or '', '\n')
@@ -95,7 +100,96 @@ local function unified_diff(range, label)
     table.remove(lines)
   end
   if #lines == 0 then
-    vim.notify('No differences', vim.log.levels.INFO)
+    return nil, 'No differences'
+  end
+  return lines
+end
+
+-- Refreshing: buffer line numbers move as soon as the diff changes shape, so
+-- the cursor is remembered as "line N of the new side of file F" instead --
+-- that survives hunks growing, shrinking or appearing above it.
+
+--- @return string|nil file, integer|nil newline
+local function diff_anchor(buf, lnum)
+  local file, newline, in_hunk
+  -- lines 1..lnum, so the walk ends on the cursor line itself
+  for _, l in ipairs(vim.api.nvim_buf_get_lines(buf, 0, lnum, false)) do
+    local hunk = l:match '^@@ %-%d+,?%d* %+(%d+)'
+    if l:match '^diff %-%-git ' then
+      file, newline, in_hunk = l:match '^diff %-%-git a/.* b/(.*)$', nil, false
+    elseif hunk then
+      -- the first content line of the hunk *is* that line, so start one below
+      newline, in_hunk = tonumber(hunk) - 1, true
+    elseif in_hunk and (l:sub(1, 1) == ' ' or l:sub(1, 1) == '+') then
+      newline = (newline or 0) + 1
+    end
+  end
+  return file, newline
+end
+
+--- Buffer line closest to the anchor: the first line of `file`'s diff that has
+--- reached `newline`, or failing that the start of `file`'s diff.
+local function find_anchor(buf, file, newline)
+  if not file then
+    return nil
+  end
+  local cur, newl, in_hunk, file_start
+  for i, l in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, false)) do
+    local hunk = l:match '^@@ %-%d+,?%d* %+(%d+)'
+    if l:match '^diff %-%-git ' then
+      cur, newl, in_hunk = l:match '^diff %-%-git a/.* b/(.*)$', nil, false
+      if cur == file and not file_start then
+        file_start = i
+      end
+    elseif hunk then
+      newl, in_hunk = tonumber(hunk) - 1, true
+    elseif in_hunk and (l:sub(1, 1) == ' ' or l:sub(1, 1) == '+') then
+      newl = (newl or 0) + 1
+    end
+    if cur == file and newline and newl and newl >= newline then
+      return i
+    end
+  end
+  return file_start
+end
+
+--- Re-run the diff of the current unified buffer in place.
+local function unified_refresh()
+  local buf, win = vim.api.nvim_get_current_buf(), vim.api.nvim_get_current_win()
+  local range = vim.b[buf].unified_range
+  if range == nil then
+    return
+  end
+
+  local lines, err = run_diff(range, vim.b[buf].unified_dir)
+  if not lines then
+    if err ~= 'No differences' then
+      vim.notify(err, vim.log.levels.ERROR)
+      return
+    end
+    lines = { '(no differences)' }
+  end
+
+  local view = vim.fn.winsaveview()
+  local file, newline = diff_anchor(buf, view.lnum)
+
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].modifiable = false
+
+  local target = find_anchor(buf, file, newline) or math.min(view.lnum, #lines)
+  -- keep the cursor at the same height in the window
+  vim.fn.winrestview { lnum = target, col = view.col, topline = math.max(1, target - (view.lnum - view.topline)) }
+  vim.api.nvim_win_set_cursor(win, { target, view.col })
+end
+
+--- @param range string|nil  e.g. "master...HEAD", "HEAD~3", "" for working tree
+--- @param label string|nil  buffer name to show instead of `range`
+local function unified_diff(range, label)
+  local dir = git_dir()
+  local lines, err = run_diff(range, dir)
+  if not lines then
+    vim.notify(err, err == 'No differences' and vim.log.levels.INFO or vim.log.levels.ERROR)
     return
   end
 
@@ -112,6 +206,11 @@ local function unified_diff(range, label)
   vim.bo[buf].swapfile = false
   vim.bo[buf].filetype = 'diff'
   vim.bo[buf].modifiable = false
+
+  -- what `r` re-runs; the directory is pinned because the scratch buffer has no
+  -- real path to derive one from
+  vim.b[buf].unified_range = range or ''
+  vim.b[buf].unified_dir = dir
 
   -- bare terminal look: no gutter, no line numbers, no wrapping
   vim.wo[win].number = false
@@ -143,6 +242,7 @@ local function unified_diff(range, label)
     vim.fn.search('^diff --git', 'bW')
   end, 'Previous file')
   map('<CR>', 'za', 'Fold / unfold this file')
+  map('r', unified_refresh, 'Re-run the diff, keeping the cursor in place')
 end
 
 --- Unified diff of the *working tree* against a picked ref.
