@@ -711,7 +711,6 @@ require('lazy').setup({
           -- defs) which the railscasts colorscheme maps to @lsp.* groups.
         },
         -- gopls = {},
-        -- pyright = {},
         bashls = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -738,8 +737,39 @@ require('lazy').setup({
           },
         },
 
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                typeCheckingMode = 'off',
+                diagnosticMode = 'openFilesOnly',
+                useLibraryCodeForTypes = false,
+                -- Added to fix extrem lag in GB-large repos where the LSP scanned everything (14.01.2026)
+                -- autoSearchPaths = false,
+
+                -- Add these to reduce noise:
+                reportGeneralTypeIssues = false,
+                reportOptionalMemberAccess = false,
+                reportOptionalSubscript = false,
+                reportPrivateImportUsage = false,
+              },
+            },
+          },
+        },
+
         texlab = {
-          capabilities = capabilities, -- Pass capabilities to texlab as well
+          -- Drop the TeX box-warning noise (Overfull/Underfull \hbox and \vbox);
+          -- every other diagnostic stays on.
+          handlers = {
+            ['textDocument/publishDiagnostics'] = function(err, result, ctx, config)
+              if result and result.diagnostics then
+                result.diagnostics = vim.tbl_filter(function(diagnostic)
+                  return not diagnostic.message:find '^[OU]n?[dv]?e?r?full \\[hv]box'
+                end, result.diagnostics)
+              end
+              return vim.lsp.handlers['textDocument/publishDiagnostics'](err, result, ctx, config)
+            end,
+          },
           settings = {
             texlab = {
               build = {
@@ -776,46 +806,17 @@ require('lazy').setup({
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+      -- mason-lspconfig v2 dropped the `handlers` option: it only auto-enables the
+      -- servers Mason installed, using nvim-lspconfig's stock config. Overrides therefore
+      -- have to be registered on Neovim's native config, which vim.lsp.enable() reads.
+      vim.lsp.config('*', { capabilities = capabilities })
+      for server_name, server_config in pairs(servers) do
+        vim.lsp.config(server_name, server_config)
+      end
+
       require('mason-lspconfig').setup {
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-
-          -- Nicco
-          pyright = function()
-            require('lspconfig').pyright.setup {
-              capabilities = capabilities,
-              settings = {
-                python = {
-                  analysis = {
-                    typeCheckingMode = 'off',
-                    diagnosticMode = 'openFilesOnly',
-                    useLibraryCodeForTypes = false,
-                    -- Added to fix extrem lag in GB-large repos where the LSP scanned everything (14.01.2026)
-                    -- autoSearchPaths = false,
-                    -- Changed to false for same problem (14.01.2026)
-                    -- useLibraryCodeForTypes = false,
-
-                    -- useLibraryCodeForTypes = false,
-                    -- Add these to reduce noise:
-                    reportGeneralTypeIssues = false,
-                    reportOptionalMemberAccess = false,
-                    reportOptionalSubscript = false,
-                    reportPrivateImportUsage = false,
-                  },
-                },
-              },
-            }
-          end,
-        },
       }
     end,
   },
