@@ -931,6 +931,7 @@ require('lazy').setup({
             s('ttt', { t '\\texttt{', i(1), t '}' }),
 
             s('sc', { t '\\textsc{', i(1), t '}' }),
+            s('incl', { t '\\includegraphics[width=0.8\\textwidth]{', i(1), t '}' }),
 
             s('nrl', { t '\\nrl{', i(1), t '}' }),
             s('ref', { t '\\ref{', i(1), t '}' }),
