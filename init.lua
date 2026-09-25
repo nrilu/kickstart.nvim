@@ -1071,7 +1071,9 @@ require('lazy').setup({
         implementation = 'prefer_rust_with_warning',
         sorts = {
           function(a, b)
-            local is_python = vim.bo.filetype == 'python'
+            local ft = vim.bo.filetype
+            local is_python = ft == 'python'
+            local is_shell = ft == 'sh' or ft == 'bash' or ft == 'zsh'
 
             if is_python then
               -- A few light rules on top of blink's default score
@@ -1138,6 +1140,58 @@ require('lazy').setup({
 
               local a_prio = py_rank(a)
               local b_prio = py_rank(b)
+              if a_prio ~= b_prio then
+                return a_prio < b_prio
+              end
+
+              -- Otherwise fall through to default score sorting below.
+            elseif is_shell then
+              -- Shell: the names that exist in *this* script and on disk
+              -- first, canned text last. Without this, blink's snippet
+              -- score_offset (100) buries your own `$my_var` under
+              -- friendly-snippets entries and bashls' own shorthands.
+              --
+              -- bashls tags every item it sends with `data.type`:
+              --    0 = builtin, 1 = PATH executable, 2 = reserved word,
+              --    3 = symbol (declared in this file / sourced files),
+              --    4 = snippet
+              -- which separates "a variable/function you wrote" from "one of
+              -- the ~2000 programs in $PATH" far better than the LSP kind
+              -- does (both arrive as Function).
+              local function sh_rank(item)
+                -- Paths and file names (blink's path source) on top.
+                if item.source_id == 'path' then
+                  return 0
+                end
+                -- Snippets and shorthands last, wherever they come from.
+                if item.source_id == 'snippets' or item.kind == 15 then
+                  return 5
+                end
+
+                local data_type = type(item.data) == 'table' and item.data.type or nil
+                if data_type ~= nil then
+                  if data_type == 3 then
+                    return 1 -- your own variables, functions, command options
+                  elseif data_type == 2 then
+                    return 4 -- reserved words (if, for, done, ...)
+                  elseif data_type == 4 then
+                    return 5 -- bashls shorthand snippets
+                  end
+                  return 3 -- builtins and PATH executables
+                end
+
+                -- Other sources without bashls' data: go by LSP kind.
+                local kind = item.kind
+                if kind == 6 or kind == 21 or kind == 5 or kind == 10 then
+                  return 1 -- Variable / Constant / Field / Property
+                elseif kind == 14 then
+                  return 4 -- Keyword
+                end
+                return 3
+              end
+
+              local a_prio = sh_rank(a)
+              local b_prio = sh_rank(b)
               if a_prio ~= b_prio then
                 return a_prio < b_prio
               end
@@ -1472,6 +1526,21 @@ require('lazy').setup({
     opts = {
       blame_options = { '-w' },
     },
+  },
+  {
+    'm00qek/baleia.nvim',
+    version = '*',
+    config = function()
+      vim.g.baleia = require('baleia').setup {}
+
+      -- Command to colorize the current buffer
+      vim.api.nvim_create_user_command('BaleiaColorize', function()
+        vim.g.baleia.once(vim.api.nvim_get_current_buf())
+      end, { bang = true })
+
+      -- Command to show logs
+      vim.api.nvim_create_user_command('BaleiaLogs', vim.cmd.messages, { bang = true })
+    end,
   },
 
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
