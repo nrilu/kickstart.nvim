@@ -19,9 +19,9 @@
 -- re-run the diff (cursor stays on the same line of the same file).
 --
 -- Two ways to look at a diff:
---   <leader>gd/gu/gU  unified -- one column of -/+ lines, like `git diff` in a
---                     terminal (see `unified_diff` below)
---   <leader>gD/gc/gr  side-by-side (diffview), old on the left, new on the right
+--   <leader>gd/gu/gt/gU  unified -- one column of -/+ lines, like `git diff` in a
+--                        terminal (see `unified_diff` below)
+--   <leader>gD/gc/gr     side-by-side (diffview), old on the left, new on the right
 -- Both use the same colors: no backgrounds, green for added, red for removed.
 
 --- The current file's directory, so this also works on a repo that isn't nvim's
@@ -260,6 +260,15 @@ local function unified_against_ref()
   end)
 end
 
+--- Unified diff of the working tree against the picked ref's *tip* -- plain
+--- `git diff <ref>`, so commits on the ref you don't have yet show up too
+--- (reversed, as removals).
+local function unified_against_tip()
+  pick_ref('Unified diff of working tree against (tip):', function(ref)
+    unified_diff(ref, ref .. ' tip..working tree')
+  end)
+end
+
 --- Unified diff of a free-form range; empty input = working tree.
 local function unified_range()
   vim.ui.input({ prompt = 'git diff ' }, function(input)
@@ -410,6 +419,7 @@ return {
       { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = '[G]it file [h]istory (current file)' },
       { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = '[G]it [H]istory (whole repo)' },
       { '<leader>gu', unified_against_ref, desc = '[G]it [u]nified diff vs branch' },
+      { '<leader>gt', unified_against_tip, desc = '[G]it unified diff vs branch [t]ip' },
       { '<leader>gU', unified_range, desc = '[G]it [U]nified diff, custom range' },
       { '<leader>gq', '<cmd>DiffviewClose<cr>', desc = '[G]it diff [q]uit' },
     },
