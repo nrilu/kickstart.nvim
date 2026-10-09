@@ -705,7 +705,7 @@ require('lazy').setup({
             '--clang-tidy',
             '--header-insertion=never',
             '--completion-style=detailed',
-            '--function-arg-placeholders',
+            '--function-arg-placeholders=1',
           },
           -- clangd emits richer semantic tokens (params, members, calls vs.
           -- defs) which the railscasts colorscheme maps to @lsp.* groups.
