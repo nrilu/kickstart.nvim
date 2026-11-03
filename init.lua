@@ -1867,6 +1867,39 @@ vim.keymap.set('n', '<leader>tf', function()
   vim.notify('Autoformat on save: ' .. (vim.b.disable_autoformat and 'OFF (this buffer)' or 'ON'))
 end, { desc = '[T]oggle [F]ormat on save (buffer)' })
 
+-- Turn LSP off for the current buffer only. Other buffers/nvim instances showing
+-- the same file are unaffected.
+local function detach_lsp_clients(buf)
+  for _, client in ipairs(vim.lsp.get_clients { bufnr = buf }) do
+    vim.lsp.buf_detach_client(buf, client.id)
+  end
+end
+
+-- Keep it off when the buffer is reloaded (:e)
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('lsp-off-buffer', { clear = true }),
+  callback = function(event)
+    if vim.b[event.buf].lsp_disabled then
+      vim.schedule(function()
+        detach_lsp_clients(event.buf)
+      end)
+    end
+  end,
+})
+
+vim.keymap.set('n', '<leader>tl', function()
+  local buf = vim.api.nvim_get_current_buf()
+  vim.b[buf].lsp_disabled = not vim.b[buf].lsp_disabled
+  if vim.b[buf].lsp_disabled then
+    detach_lsp_clients(buf)
+    vim.notify 'LSP: OFF (this buffer)'
+  else
+    -- Let vim.lsp.enable() attach the configured servers again
+    vim.api.nvim_exec_autocmds('FileType', { group = 'nvim.lsp.enable', buffer = buf })
+    vim.notify 'LSP: ON'
+  end
+end, { desc = '[T]oggle [L]SP (buffer)' })
+
 -- See recent files
 -- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')
 vim.keymap.set('n', '<leader>r', function()
