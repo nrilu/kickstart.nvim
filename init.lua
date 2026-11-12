@@ -757,6 +757,34 @@ require('lazy').setup({
           },
         },
 
+        -- texlab = {
+        -- Drop the TeX box-warning noise (Overfull/Underfull \hbox and \vbox);
+        -- every other diagnostic stays on.
+        -- handlers = {
+        -- ['textDocument/publishDiagnostics'] = function(err, result, ctx, config)
+        -- if result and result.diagnostics then
+        -- result.diagnostics = vim.tbl_filter(function(diagnostic)
+        -- return not diagnostic.message:find '^[OU]n?[dv]?e?r?full \\[hv]box'
+        -- end, result.diagnostics)
+        -- end
+        -- return vim.lsp.handlers['textDocument/publishDiagnostics'](err, result, ctx, config)
+        -- end,
+        -- },
+        -- settings = {
+        -- texlab = {
+        -- build = {
+        -- executable = 'pdflatex',
+        -- args = { '-interaction=nonstopmode', '-synctex=1', '%f' },
+        -- onSave = true, -- Auto-build on save
+        -- forwardSearchAfter = true, -- Forward search after successful build
+        -- },
+        -- forwardSearch = {
+        -- executable = 'zathura',
+        -- args = { '--synctex-forward', '%l:1:%f', '%p' },
+        -- },
+        -- },
+        -- },
+        -- },
         texlab = {
           -- Drop the TeX box-warning noise (Overfull/Underfull \hbox and \vbox);
           -- every other diagnostic stays on.
@@ -764,7 +792,7 @@ require('lazy').setup({
             ['textDocument/publishDiagnostics'] = function(err, result, ctx, config)
               if result and result.diagnostics then
                 result.diagnostics = vim.tbl_filter(function(diagnostic)
-                  return not diagnostic.message:find '^[OU]n?[dv]?e?r?full \\[hv]box'
+                  return not diagnostic.message:find '^%a+full \\[hv]box'
                 end, result.diagnostics)
               end
               return vim.lsp.handlers['textDocument/publishDiagnostics'](err, result, ctx, config)
@@ -773,14 +801,8 @@ require('lazy').setup({
           settings = {
             texlab = {
               build = {
-                executable = 'pdflatex',
-                args = { '-interaction=nonstopmode', '-synctex=1', '%f' },
-                onSave = true, -- Auto-build on save
-                forwardSearchAfter = true, -- Forward search after successful build
-              },
-              forwardSearch = {
-                executable = 'zathura',
-                args = { '--synctex-forward', '%l:1:%f', '%p' },
+                onSave = false, -- VimTeX (latexmk -pvc) does the compiling
+                forwardSearchAfter = false, -- VimTeX handles Zathura
               },
             },
           },
@@ -1707,6 +1729,16 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'tex',
+  callback = function(ev)
+    vim.keymap.set('n', '<leader>lc', function()
+      vim.fn.system { 'latexmk', '-c', '-cd', vim.fn.expand '%:p' }
+      vim.cmd 'LspTexlabBuild' -- or "TexlabBuild" on older lspconfig
+    end, { buffer = ev.buf, desc = 'LaTeX: clean + build' })
+  end,
+})
+
 -- Folds for markdown
 -- vim.api.nvim_create_autocmd('FileType', {
 -- pattern = 'markdown',
@@ -2052,8 +2084,8 @@ vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 
 vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'i' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
+vim.keymap.set({ 'i' }, '<A-ä>', '{}<Left>', { desc = 'Shortcut for braced brackets' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
-
 vim.keymap.set('i', '<A-l>', '<C-g>U<Right>', { desc = 'Move insert cursor one right' })
 vim.keymap.set('i', '<A-h>', '<C-g>U<Left>', { desc = 'Move insert cursor one left' })
 
