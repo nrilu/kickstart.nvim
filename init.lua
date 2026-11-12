@@ -790,6 +790,17 @@ require('lazy').setup({
           -- every other diagnostic stays on.
           handlers = {
             ['textDocument/publishDiagnostics'] = function(err, result, ctx, config)
+              -- Work around neovim#40802 (fixed on master by #40869, not in 0.12.x): vim.diagnostic.set()
+              -- on an unloaded buffer leaks a BufRead autocmd holding a copy of the diagnostics, once per
+              -- publish. texlab publishes for every project file (.bib/.cls) after each edit, which grew
+              -- nvim to ~11 GB in 2 h. Skip files that aren't loaded; texlab republishes when they're
+              -- opened. Delete this block once on nvim >= 0.13.
+              if result and vim.fn.has 'nvim-0.13' == 0 then
+                local bufnr = vim.uri_to_bufnr(result.uri)
+                if not vim.api.nvim_buf_is_loaded(bufnr) then
+                  return
+                end
+              end
               if result and result.diagnostics then
                 result.diagnostics = vim.tbl_filter(function(diagnostic)
                   return not diagnostic.message:find '^%a+full \\[hv]box'
