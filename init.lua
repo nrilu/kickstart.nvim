@@ -1414,6 +1414,15 @@ require('lazy').setup({
       -- API. We run 0.12.3, so the guard is a false negative. Drop this once nvim is
       -- upgraded past 0.12.4. See :h vimtex_version_check
       vim.g.vimtex_version_check = 0
+
+      -- <C-l> as a second forward-search key, mirroring <C-l>/,lv in zathura.
+      -- Buffer-local, so the global <C-l> (focus right window) stays intact elsewhere.
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'tex',
+        callback = function(ev)
+          vim.keymap.set('n', '<C-l>', '<Plug>(vimtex-view)', { buffer = ev.buf, remap = true, desc = 'VimTeX: forward search (like ,lv)' })
+        end,
+      })
       -- vim.g.maplocalleader = ',' //needs to be defined before the lazy plugin
 
       -- vim.o.foldmethod = 'expr'
