@@ -1400,7 +1400,11 @@ require('lazy').setup({
 
   {
     'lervag/vimtex',
-    ft = { 'tex' },
+    -- Must not be lazy-loaded: Zathura's inverse search runs a fresh
+    -- `nvim --headless -c VimtexInverseSearch ...` that never opens a .tex file,
+    -- so an ft-triggered load would leave the command undefined. VimTeX keeps
+    -- its startup cost negligible via autoload anyway. See :h vimtex-faq-lazy
+    lazy = false,
 
     init = function()
       vim.g.vimtex_view_method = 'zathura'
