@@ -1956,6 +1956,28 @@ vim.keymap.set('n', '<leader>tl', function()
   end
 end, { desc = '[T]oggle [L]SP (buffer)' })
 
+-- No autocompletion or snippets in plain .txt files. blink.cmp checks
+-- vim.b.completion: false turns off its menu, keymaps and snippet expansion for
+-- the buffer, true turns them back on. <leader>tc switches between the two.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('no-completion-text', { clear = true }),
+  pattern = 'text',
+  callback = function(event)
+    vim.b[event.buf].completion = false
+  end,
+})
+
+vim.keymap.set('n', '<leader>tc', function()
+  local off = vim.b.completion == false
+  vim.b.completion = off
+  if not off then
+    pcall(function()
+      require('blink.cmp').hide()
+    end)
+  end
+  vim.notify('Autocompletion + snippets: ' .. (off and 'ON' or 'OFF (this buffer)'))
+end, { desc = '[T]oggle auto[C]ompletion + snippets (buffer)' })
+
 -- See recent files
 -- vim.keymap.set('n', '<Leader>r', '<Cmd>Telescope oldfiles<CR>')
 vim.keymap.set('n', '<leader>r', function()
