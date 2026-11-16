@@ -962,6 +962,7 @@ require('lazy').setup({
             s('frac', { t '\\frac{', i(1), t '}{', i(2), t '}' }),
 
             s('ttt', { t '\\texttt{', i(1), t '}' }),
+            s('emph', { t '\\emph{', i(1), t '}' }),
 
             s('sc', { t '\\textsc{', i(1), t '}' }),
             s('incl', { t '\\includegraphics[width=0.8\\textwidth]{', i(1), t '}' }),
