@@ -2130,6 +2130,14 @@ vim.keymap.set({ 'n', 'v' }, 'ø', 'X', { desc = 'Delete via ALTGR+d' })
 
 vim.keymap.set({ 'n' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
 vim.keymap.set({ 'i' }, 'ä', '/', { desc = 'Remap ä to more useful ' })
+-- ...except in plain .txt files, where ä types ä (buffer-local map wins over the global one)
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('literal-ae-text', { clear = true }),
+  pattern = 'text',
+  callback = function(event)
+    vim.keymap.set('i', 'ä', 'ä', { buffer = event.buf, desc = 'Literal ä in text files' })
+  end,
+})
 vim.keymap.set({ 'i' }, '<A-ä>', '{}<Left>', { desc = 'Shortcut for braced brackets' })
 vim.keymap.set({ 'n' }, '<C-a>', 'ggvGy', { desc = 'Select all' })
 vim.keymap.set('i', '<A-l>', '<C-g>U<Right>', { desc = 'Move insert cursor one right' })
