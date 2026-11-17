@@ -2035,14 +2035,31 @@ vim.keymap.set('n', '<leader>tl', function()
   end
 end, { desc = '[T]oggle [L]SP (buffer)' })
 
--- No autocompletion or snippets in plain .txt files. blink.cmp checks
--- vim.b.completion: false turns off its menu, keymaps and snippet expansion for
--- the buffer, true turns them back on. <leader>tc switches between the two.
+-- No autocompletion or snippets in plain .txt files, nor in files without an
+-- extension (unless Neovim still recognises them, e.g. Makefile, Dockerfile or a
+-- script with a #! line). blink.cmp checks vim.b.completion: false turns off its
+-- menu, keymaps and snippet expansion for the buffer, true turns them back on.
+-- <leader>tc switches between the two.
+local no_completion_group = vim.api.nvim_create_augroup('no-completion-text', { clear = true })
 vim.api.nvim_create_autocmd('FileType', {
-  group = vim.api.nvim_create_augroup('no-completion-text', { clear = true }),
+  group = no_completion_group,
   pattern = 'text',
   callback = function(event)
     vim.b[event.buf].completion = false
+  end,
+})
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+  group = no_completion_group,
+  callback = function(event)
+    if event.file == '' or vim.fn.fnamemodify(event.file, ':e') ~= '' then
+      return
+    end
+    -- Filetype detection runs after this autocmd, so look at the result a tick later.
+    vim.schedule(function()
+      if vim.api.nvim_buf_is_valid(event.buf) and vim.bo[event.buf].buftype == '' and vim.bo[event.buf].filetype == '' then
+        vim.b[event.buf].completion = false
+      end
+    end)
   end,
 })
 
