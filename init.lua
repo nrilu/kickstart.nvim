@@ -1788,6 +1788,24 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- Brighter comments in shell scripts: blend the active scheme's Comment fg 20%
+-- toward white. Reapplied on ColorScheme since the scheme switches per filetype.
+local function brighten_shell_comments()
+  local hl = vim.api.nvim_get_hl(0, { name = 'Comment', link = false })
+  local fg = hl.fg
+  if not fg then
+    return
+  end
+  local function lift(c)
+    return math.floor(c + (255 - c) * 0.2 + 0.5)
+  end
+  local r, g, b = lift(bit.rshift(fg, 16)), lift(bit.band(bit.rshift(fg, 8), 0xff)), lift(bit.band(fg, 0xff))
+  hl.fg = string.format('#%02x%02x%02x', r, g, b)
+  vim.api.nvim_set_hl(0, '@comment.bash', hl) -- keeps Comment's italic etc.
+end
+brighten_shell_comments()
+vim.api.nvim_create_autocmd('ColorScheme', { callback = brighten_shell_comments })
+
 -- JSON
 vim.api.nvim_create_autocmd('FileType', {
   pattern = { 'json', 'jsonc' },
