@@ -154,6 +154,16 @@ vim.o.splitbelow = true
 --   and `:help lua-options-guide`
 vim.o.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+-- No » arrow on tabs in plain .txt files. Tabs still need a 'tab' entry, otherwise
+-- 'list' shows them as ^I, so draw them as blank space. Trailing-space and nbsp
+-- markers stay.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('text-no-tab-arrow', { clear = true }),
+  pattern = 'text',
+  callback = function()
+    vim.opt_local.listchars = { tab = '  ', trail = '·', nbsp = '␣' }
+  end,
+})
 
 -- Preview substitutions live, as you type!
 vim.o.inccommand = 'split'
